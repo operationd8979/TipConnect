@@ -2,9 +2,11 @@ package Tip.Connect.service;
 
 import Tip.Connect.model.AppUser;
 import Tip.Connect.model.ConfirmationToken;
+import Tip.Connect.model.LoginRequest;
 import Tip.Connect.repository.AppUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AppUserService implements UserDetailsService {
 
     private final String USER_NOT_FOUND_MSG = "user with email %s not found";
@@ -23,6 +25,7 @@ public class AppUserService implements UserDetailsService {
     private final AppUserRepository appUserRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
+    private final JwtService jwtService;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -54,5 +57,10 @@ public class AppUserService implements UserDetailsService {
 
     public int enableAppUser(String email) {
         return appUserRepository.enableAppUser(email);
+    }
+
+    public String login(LoginRequest request) {
+        var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
+        return jwtService.generateToken(userDetails);
     }
 }
