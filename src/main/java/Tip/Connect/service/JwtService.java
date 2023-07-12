@@ -18,16 +18,16 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-//    @Value("@{application.security.jwt.serect-key}")
-//    private String serectKey;
-//    @Value("@{application.security.jwt.expiration}")
-//    private Long jwtExpiration;
-//    @Value("@{application.security.jwt.refresh-token.expiration}")
-//    private Long refreshExpiration;
+    @Value("${application.security.jwt.secret-key}")
+    private String serectKey;
+    @Value("${application.security.jwt.expiration}")
+    private long jwtExpiration;
+    @Value("${application.security.jwt.refresh-token.expiration}")
+    private long refreshExpiration;
 
-    private String serectKey = "2949e145c15445a20cc0d0d569e070cdcabfa18bb049fbf4eb1c7c75023a1fb1";
-    private Long jwtExpiration = 86400000L;
-    private Long refreshExpiration = 604800000L;
+//    private String serectKey = "2949e145c15445a20cc0d0d569e070cdcabfa18bb049fbf4eb1c7c75023a1fb1";
+//    private Long jwtExpiration = 86400000L;
+//    private Long refreshExpiration = 604800000L;
 
     public String generateRefreshToken(UserDetails userDetails){
         return buildToken(new HashMap<>(),userDetails,refreshExpiration);

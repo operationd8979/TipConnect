@@ -8,6 +8,8 @@ import Tip.Connect.model.RegisterRequest;
 import Tip.Connect.validator.EmailValidator;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,40 +24,45 @@ public class RegistrationService {
     private final EmailSender emailSender;
 
     @Transactional
-    public String register(RegisterRequest request) {
+    public ResponseEntity<String> register(RegisterRequest request) {
         boolean isValidEmail = emailValidator.test(request.getEmail());
         if(!isValidEmail){
-            throw new IllegalStateException("Email is not valid");
+            //throw new IllegalStateException("Email is not valid");
+            return ResponseEntity.ok("Email is not valid");
         }
-        String token = appUserService.signUp(
-                new AppUser(
-                        request.getLastName(),
-                        request.getFirstName(),
-                        request.getEmail(),
-                        request.getPassword(),
-                        AppUserRole.USER)
-        );
-        String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
-        emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
-        return token;
+        try{
+            String token = appUserService.signUp(
+                    new AppUser(
+                            request.getLastName(),
+                            request.getFirstName(),
+                            request.getEmail(),
+                            request.getPassword(),
+                            AppUserRole.USER)
+            );
+            String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
+            emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
+            return ResponseEntity.ok(token);
+        }catch (Exception ex){
+            return ResponseEntity.ok(ex.getMessage());
+        }
     }
 
-    public String confirmToken(String token) {
+    public ResponseEntity<String> confirmToken(String token) {
         ConfirmationToken confirmationToken = confirmationTokenService
                 .getToken(token)
                 .orElseThrow(()->new IllegalStateException("token not found"));
         if(confirmationToken.getConfirmedAt()!=null){
-            throw new IllegalStateException("token already confirmed");
+            //throw new IllegalStateException("token already confirmed");
+            return ResponseEntity.ok("token already confirmed");
         }
         LocalDateTime expiredAt = confirmationToken.getExpiresAt();
         if(expiredAt.isBefore(LocalDateTime.now())){
-            throw new IllegalStateException("token expired");
+            //throw new IllegalStateException("token expired");
+            return ResponseEntity.ok("token expired");
         }
-
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         appUserService.enableAppUser(confirmationToken.getAppUser().getEmail());
-
-        return "confirmed";
+        return ResponseEntity.ok("confirmed");
     }
 
     private String buildEmail(String name, String link) {

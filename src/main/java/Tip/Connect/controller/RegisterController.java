@@ -4,6 +4,7 @@ import Tip.Connect.model.RegisterRequest;
 import Tip.Connect.service.RegistrationService;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,12 +15,12 @@ public class RegisterController {
     private final RegistrationService registrationService;
 
     @PostMapping
-    public String register(@RequestBody RegisterRequest request){
+    public ResponseEntity<String> register(@RequestBody RegisterRequest request){
         return registrationService.register(request);
     }
 
     @GetMapping("/confirm")
-    public String confirmToken(@RequestParam String token){
+    public ResponseEntity<String> confirmToken(@RequestParam String token){
         return registrationService.confirmToken(token);
     }
 

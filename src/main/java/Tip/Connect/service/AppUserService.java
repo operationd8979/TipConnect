@@ -1,6 +1,7 @@
 package Tip.Connect.service;
 
 import Tip.Connect.model.AppUser;
+import Tip.Connect.model.AuthenticationReponse;
 import Tip.Connect.model.ConfirmationToken;
 import Tip.Connect.model.LoginRequest;
 import Tip.Connect.repository.AppUserRepository;
@@ -35,32 +36,61 @@ public class AppUserService implements UserDetailsService {
 
     @Transactional
     public String signUp(AppUser appUser) {
-        boolean userExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();
-        if(userExists){
-            throw new IllegalStateException("Email already taken");
+        try{
+            boolean userExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();
+            if(userExists){
+                throw new IllegalStateException("Email already taken");
+            }
+            String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
+            appUser.setPassword(encodedPassword);
+            appUserRepository.save(appUser);
+            String token = UUID.randomUUID().toString();
+            ConfirmationToken confirmationToken = new ConfirmationToken(
+                    token,
+                    LocalDateTime.now(),
+                    LocalDateTime.now().plusMinutes(15),
+                    appUser
+            );
+            confirmationTokenService.saveConfirmationToken(confirmationToken);
+            return token;
+        }catch (Exception ex){
+            return "Email already taken";
         }
-        String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
-        appUser.setPassword(encodedPassword);
-        appUserRepository.save(appUser);
+    }
 
-        String token = UUID.randomUUID().toString();
-        ConfirmationToken confirmationToken = new ConfirmationToken(
-                token,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(15),
-                appUser
-        );
-        confirmationTokenService.saveConfirmationToken(confirmationToken);
+    public AuthenticationReponse login(LoginRequest request) {
+        try{
+            var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
+            final String accessToken = jwtService.generateToken(userDetails);
+            final String refreshToken = jwtService.generateRefreshToken(userDetails);
+            return AuthenticationReponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        }catch (IllegalStateException ex){
+            return null;
+        }
 
-        return token;
     }
 
     public int enableAppUser(String email) {
         return appUserRepository.enableAppUser(email);
     }
 
-    public String login(LoginRequest request) {
-        var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
-        return jwtService.generateToken(userDetails);
+    public AuthenticationReponse refreshToken(String refreshToken) {
+        try{
+            final String username = jwtService.extractUsername(refreshToken);
+            if(username!= null){
+                UserDetails userDetails = loadUserByUsername(username);
+                if(jwtService.isTokenValid(refreshToken,userDetails)){
+                    return AuthenticationReponse.builder()
+                            .accessToken(jwtService.generateToken(userDetails)).build();
+                }
+            }
+            return null;
+        }catch (Exception ex){
+            return AuthenticationReponse.builder()
+                    .accessToken(ex.getMessage()).build();
+        }
     }
 }
