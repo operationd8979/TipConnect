@@ -14,6 +14,7 @@ public class RegisterController {
 
     private final RegistrationService registrationService;
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping
     public ResponseEntity<String> register(@RequestBody RegisterRequest request){
         return registrationService.register(request);
@@ -24,6 +25,7 @@ public class RegisterController {
         return registrationService.confirmToken(token);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/hello")
     public String hello(){
         return "hello";
