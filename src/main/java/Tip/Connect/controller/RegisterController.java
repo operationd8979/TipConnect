@@ -2,6 +2,7 @@ package Tip.Connect.controller;
 
 import Tip.Connect.model.RegisterRequest;
 import Tip.Connect.service.RegistrationService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,9 @@ public class RegisterController {
 
     private final RegistrationService registrationService;
 
-    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request){
-        return registrationService.register(request);
+    public ResponseEntity<String> register(HttpServletResponse httpServletResponse, @RequestBody RegisterRequest request){
+        return registrationService.register(httpServletResponse,request);
     }
 
     @GetMapping("/confirm")
@@ -25,7 +25,6 @@ public class RegisterController {
         return registrationService.confirmToken(token);
     }
 
-    @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/hello")
     public String hello(){
         return "hello";

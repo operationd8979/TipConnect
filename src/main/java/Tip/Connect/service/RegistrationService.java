@@ -5,7 +5,9 @@ import Tip.Connect.model.AppUser;
 import Tip.Connect.model.AppUserRole;
 import Tip.Connect.model.ConfirmationToken;
 import Tip.Connect.model.RegisterRequest;
+import Tip.Connect.utility.CookieUtil;
 import Tip.Connect.validator.EmailValidator;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,7 +26,7 @@ public class RegistrationService {
     private final EmailSender emailSender;
 
     @Transactional
-    public ResponseEntity<String> register(RegisterRequest request) {
+    public ResponseEntity<String> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
         boolean isValidEmail = emailValidator.test(request.getEmail());
         if(!isValidEmail){
             //throw new IllegalStateException("Email is not valid");
@@ -41,6 +43,7 @@ public class RegistrationService {
             );
             String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
             emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
+            CookieUtil.create(httpServletResponse,"token",token,false,-1,"localhost");
             return ResponseEntity.ok(token);
         }catch (Exception ex){
             return ResponseEntity.ok(ex.getMessage());
