@@ -17,6 +17,7 @@ public class RegisterController {
 
     @PostMapping
     public ResponseEntity<String> register(HttpServletResponse httpServletResponse, @RequestBody RegisterRequest request){
+        System.out.println("someone register: "+ request.getEmail() + " " +request.getPassword()+ " " + request.getFirstName() + request.getLastName());
         return registrationService.register(httpServletResponse,request);
     }
 

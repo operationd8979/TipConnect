@@ -1,5 +1,6 @@
 package Tip.Connect.service;
 
+import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.email.EmailSender;
 import Tip.Connect.model.AppUser;
 import Tip.Connect.model.AppUserRole;
@@ -25,14 +26,15 @@ public class RegistrationService {
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailSender emailSender;
 
+    private final String RESPONSE_SUCCESSFUL_MESSAGE = "Your account has been created successfully, an email has been sent to your inbox.Please confirm to activate your account.";
+
     @Transactional
     public ResponseEntity<String> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
-        boolean isValidEmail = emailValidator.test(request.getEmail());
-        if(!isValidEmail){
-            //throw new IllegalStateException("Email is not valid");
-            return ResponseEntity.ok("Email is not valid");
-        }
         try{
+            boolean isValidEmail = emailValidator.test(request.getEmail());
+            if(!isValidEmail){
+                throw new IllegalStateException(ErrorMessages.INVALID_EMAIL_MESSAGE);
+            }
             String token = appUserService.signUp(
                     new AppUser(
                             request.getLastName(),
@@ -41,10 +43,13 @@ public class RegistrationService {
                             request.getPassword(),
                             AppUserRole.USER)
             );
+            if(token==null){
+                return ResponseEntity.ok(ErrorMessages.EXISTED_EMAIL_MESSAGE);
+            }
+            //            CookieUtil.create(httpServletResponse,"token",token,false,-1,"localhost");
             String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
             emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
-            CookieUtil.create(httpServletResponse,"token",token,false,-1,"localhost");
-            return ResponseEntity.ok(token);
+            return ResponseEntity.ok(RESPONSE_SUCCESSFUL_MESSAGE);
         }catch (Exception ex){
             return ResponseEntity.ok(ex.getMessage());
         }

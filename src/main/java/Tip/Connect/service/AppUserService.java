@@ -1,5 +1,6 @@
 package Tip.Connect.service;
 
+import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.AppUser;
 import Tip.Connect.model.AuthenticationReponse;
 import Tip.Connect.model.ConfirmationToken;
@@ -39,7 +40,7 @@ public class AppUserService implements UserDetailsService {
         try{
             boolean userExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();
             if(userExists){
-                throw new IllegalStateException("Email already taken");
+                throw new IllegalStateException(ErrorMessages.EXISTED_EMAIL_MESSAGE);
             }
             String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
             appUser.setPassword(encodedPassword);
@@ -54,7 +55,7 @@ public class AppUserService implements UserDetailsService {
             confirmationTokenService.saveConfirmationToken(confirmationToken);
             return token;
         }catch (Exception ex){
-            return "Email already taken";
+            return null;
         }
     }
 
@@ -64,6 +65,7 @@ public class AppUserService implements UserDetailsService {
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
             return AuthenticationReponse.builder()
+                    .code(200)
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .build();

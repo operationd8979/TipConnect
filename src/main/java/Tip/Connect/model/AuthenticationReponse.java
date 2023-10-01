@@ -1,20 +1,26 @@
 package Tip.Connect.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
 public class AuthenticationReponse {
+
+    @NonNull
+    private int code;
+
+    private String errorMessage;
 
     @JsonProperty("access_token")
     private String accessToken;
     @JsonProperty("refresh_token")
     private String refreshToken;
+
+
+    public AuthenticationReponse(int code){
+        this.code = code;
+    }
 
 }
