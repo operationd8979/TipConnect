@@ -33,7 +33,7 @@ public class RegistrationService {
         try{
             boolean isValidEmail = emailValidator.test(request.getEmail());
             if(!isValidEmail){
-                throw new IllegalStateException(ErrorMessages.INVALID_EMAIL_MESSAGE);
+                throw new IllegalStateException(ErrorMessages.INVALID_EMAIL.getMessage());
             }
             String token = appUserService.signUp(
                     new AppUser(
@@ -44,7 +44,7 @@ public class RegistrationService {
                             AppUserRole.USER)
             );
             if(token==null){
-                return ResponseEntity.ok(ErrorMessages.EXISTED_EMAIL_MESSAGE);
+                return ResponseEntity.ok(ErrorMessages.EXISTED_EMAIL.getMessage());
             }
             //            CookieUtil.create(httpServletResponse,"token",token,false,-1,"localhost");
             String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;

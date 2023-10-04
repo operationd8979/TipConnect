@@ -6,6 +6,8 @@ import Tip.Connect.model.AuthenticationReponse;
 import Tip.Connect.model.ConfirmationToken;
 import Tip.Connect.model.LoginRequest;
 import Tip.Connect.repository.AppUserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +42,7 @@ public class AppUserService implements UserDetailsService {
         try{
             boolean userExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();
             if(userExists){
-                throw new IllegalStateException(ErrorMessages.EXISTED_EMAIL_MESSAGE);
+                throw new IllegalStateException(ErrorMessages.EXISTED_EMAIL.getMessage());
             }
             String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
             appUser.setPassword(encodedPassword);
@@ -59,20 +61,34 @@ public class AppUserService implements UserDetailsService {
         }
     }
 
-    public AuthenticationReponse login(LoginRequest request) {
+    public AuthenticationReponse login(LoginRequest request, HttpServletResponse reponse) {
         try{
             var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
+            String fullName = userDetails.getFirstName()+" "+userDetails.getLastName();
+
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
-            return AuthenticationReponse.builder()
+
+            Cookie accessTokenCookie = new Cookie("access_token", accessToken);
+            accessTokenCookie.setHttpOnly(true);
+            accessTokenCookie.setPath("/");
+            accessTokenCookie.setSecure(false);
+            Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setSecure(false);
+
+            reponse.addCookie(accessTokenCookie);
+            reponse.addCookie(refreshTokenCookie);
+
+            return new AuthenticationReponse.builder()
                     .code(200)
-                    .accessToken(accessToken)
+                    .fullName(fullName)
                     .refreshToken(refreshToken)
                     .build();
         }catch (IllegalStateException ex){
             return null;
         }
-
     }
 
     public int enableAppUser(String email) {
@@ -85,14 +101,14 @@ public class AppUserService implements UserDetailsService {
             if(username!= null){
                 UserDetails userDetails = loadUserByUsername(username);
                 if(jwtService.isTokenValid(refreshToken,userDetails)){
-                    return AuthenticationReponse.builder()
-                            .accessToken(jwtService.generateToken(userDetails)).build();
+                    return new AuthenticationReponse.builder()
+                            .fullName(jwtService.generateToken(userDetails)).build();
                 }
             }
             return null;
         }catch (Exception ex){
-            return AuthenticationReponse.builder()
-                    .accessToken(ex.getMessage()).build();
+            return new AuthenticationReponse.builder()
+                    .fullName(ex.getMessage()).build();
         }
     }
 }

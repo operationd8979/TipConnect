@@ -3,6 +3,7 @@ package Tip.Connect.service;
 import Tip.Connect.model.AppUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,14 +31,33 @@ public class JwtFilterService extends OncePerRequestFilter {
             filterChain.doFilter(request,response);
             return;
         }
-        String authHeader = request.getHeader("Authorization");
-        if(authHeader == null || !authHeader.startsWith("Bearer ")){
+
+//        String authHeader = request.getHeader("Authorization");
+//        if(authHeader == null || !authHeader.startsWith("Bearer ")){
+//            filterChain.doFilter(request,response);
+//            return;
+//        }
+//        String token = authHeader.substring(7);
+//        String email = jwtService.extractUsername(token);
+
+        String token = null;
+        Cookie[] cookies = request.getCookies();
+//        if(cookies == null){
+//            System.out.println("Cookie is null!");
+//            filterChain.doFilter(request,response);
+//            return;
+//        }
+        for(Cookie cookie : cookies){
+            if("access_token".equals(cookie.getName())){
+                token = cookie.getValue();
+                break;
+            }
+        }
+        if(token==null){
             filterChain.doFilter(request,response);
             return;
         }
-        String token = authHeader.substring(7);
         String email = jwtService.extractUsername(token);
-
         if(email!=null && SecurityContextHolder.getContext().getAuthentication()==null){
             UserDetails userDetails = appUserService.loadUserByUsername(email);
             if(jwtService.isTokenValid(token,userDetails)){
