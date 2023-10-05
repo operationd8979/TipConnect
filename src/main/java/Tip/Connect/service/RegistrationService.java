@@ -2,12 +2,11 @@ package Tip.Connect.service;
 
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.email.EmailSender;
-import Tip.Connect.model.AppUser;
-import Tip.Connect.model.AppUserRole;
-import Tip.Connect.model.ConfirmationToken;
-import Tip.Connect.model.RegisterRequest;
+import Tip.Connect.model.*;
+import Tip.Connect.repository.AppUserRepository;
 import Tip.Connect.utility.CookieUtil;
 import Tip.Connect.validator.EmailValidator;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -25,11 +24,13 @@ public class RegistrationService {
     private final EmailValidator emailValidator;
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailSender emailSender;
+    private final JwtService jwtService;
+    private final AppUserRepository appUserRepository;
 
     private final String RESPONSE_SUCCESSFUL_MESSAGE = "Your account has been created successfully, an email has been sent to your inbox.Please confirm to activate your account.";
 
     @Transactional
-    public ResponseEntity<String> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
+    public ResponseEntity<HttpReponse> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
         try{
             boolean isValidEmail = emailValidator.test(request.getEmail());
             if(!isValidEmail){
@@ -44,14 +45,32 @@ public class RegistrationService {
                             AppUserRole.USER)
             );
             if(token==null){
-                return ResponseEntity.ok(ErrorMessages.EXISTED_EMAIL.getMessage());
+                return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.EXISTED_EMAIL.getCode()).errorMessage(ErrorMessages.EXISTED_EMAIL.getMessage()).build());
             }
-            //            CookieUtil.create(httpServletResponse,"token",token,false,-1,"localhost");
             String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
             emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
-            return ResponseEntity.ok(RESPONSE_SUCCESSFUL_MESSAGE);
+
+            var userDetails = appUserRepository.findByEmail(request.getEmail()).orElseThrow(()->new IllegalStateException("User not found!"));
+            String fullName = userDetails.getFirstName()+" "+userDetails.getLastName();
+
+            final String accessToken = jwtService.generateToken(userDetails);
+            final String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+            Cookie accessTokenCookie = new Cookie("access_token", accessToken);
+            accessTokenCookie.setHttpOnly(true);
+            accessTokenCookie.setPath("/");
+            accessTokenCookie.setSecure(false);
+            Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setSecure(false);
+
+            httpServletResponse.addCookie(accessTokenCookie);
+            httpServletResponse.addCookie(refreshTokenCookie);
+
+            return ResponseEntity.ok(new AuthenticationReponse.builder().code(200).fullName(fullName).message(RESPONSE_SUCCESSFUL_MESSAGE).build());
         }catch (Exception ex){
-            return ResponseEntity.ok(ex.getMessage());
+            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.UNKNOWN_EXCEPTION.getCode()).errorMessage(ex.getMessage()).build());
         }
     }
 

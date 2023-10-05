@@ -84,7 +84,7 @@ public class AppUserService implements UserDetailsService {
             return new AuthenticationReponse.builder()
                     .code(200)
                     .fullName(fullName)
-                    .refreshToken(refreshToken)
+                    .message(null)
                     .build();
         }catch (IllegalStateException ex){
             return null;

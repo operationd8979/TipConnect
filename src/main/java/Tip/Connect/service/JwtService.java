@@ -1,6 +1,7 @@
 package Tip.Connect.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -42,13 +43,13 @@ public class JwtService {
     }
 
     private String buildToken(Map<String,Object> extraClaims, UserDetails userDetails, Long expiration){
-        return Jwts.builder()
+        JwtBuilder jwtBuilder = Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+expiration))
-                .signWith(getSerectKey(), SignatureAlgorithm.HS256)
-                .compact();
+                .signWith(getSerectKey(), SignatureAlgorithm.HS256);
+        return jwtBuilder.compact();
     }
 
     private Key getSerectKey(){

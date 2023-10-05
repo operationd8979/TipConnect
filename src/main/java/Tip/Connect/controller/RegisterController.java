@@ -1,5 +1,7 @@
 package Tip.Connect.controller;
 
+import Tip.Connect.model.ErrorReponse;
+import Tip.Connect.model.HttpReponse;
 import Tip.Connect.model.RegisterRequest;
 import Tip.Connect.service.RegistrationService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,8 +18,8 @@ public class RegisterController {
     private final RegistrationService registrationService;
 
     @PostMapping
-    public ResponseEntity<String> register(HttpServletResponse httpServletResponse, @RequestBody RegisterRequest request){
-        System.out.println("someone register: "+ request.getEmail() + " " +request.getPassword()+ " " + request.getFirstName() + request.getLastName());
+    public ResponseEntity<HttpReponse> register(HttpServletResponse httpServletResponse, @RequestBody RegisterRequest request){
+        System.out.println("someone register: "+ request.getEmail() + " " +request.getPassword()+ " " + request.getFirstName() + " " + request.getLastName());
         return registrationService.register(httpServletResponse,request);
     }
 

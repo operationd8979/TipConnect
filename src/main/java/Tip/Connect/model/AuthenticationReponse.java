@@ -9,30 +9,30 @@ public class AuthenticationReponse extends HttpReponse {
 
     @JsonProperty("full_name")
     private String fullName;
-    @JsonProperty("refresh_token")
-    private String refreshToken;
+    @JsonProperty("message")
+    private String message;
 
 
     public AuthenticationReponse(int code){
         super(code);
     }
 
-    public AuthenticationReponse(int code,String refreshToken,String fullName){
+    public AuthenticationReponse(int code,String message,String fullName){
         super(code);
-        this.refreshToken = refreshToken;
+        this.message = message;
         this.fullName = fullName;
     }
 
     public AuthenticationReponse(builder builder){
         super(builder.code);
-        this.refreshToken = builder.refreshToken;
+        this.message = builder.message;
         this.fullName = builder.fullName;
     }
 
     public static class builder{
         private int code;
         private String fullName;
-        private String refreshToken;
+        private String message;
         public builder code(int code){
             this.code = code;
             return this;
@@ -41,8 +41,8 @@ public class AuthenticationReponse extends HttpReponse {
             this.fullName = fullName;
             return this;
         }
-        public builder refreshToken(String refreshToken){
-            this.refreshToken = refreshToken;
+        public builder message(String message){
+            this.message = message;
             return this;
         }
         public AuthenticationReponse build(){
