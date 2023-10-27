@@ -32,21 +32,8 @@ public class JwtFilterService extends OncePerRequestFilter {
             return;
         }
 
-//        String authHeader = request.getHeader("Authorization");
-//        if(authHeader == null || !authHeader.startsWith("Bearer ")){
-//            filterChain.doFilter(request,response);
-//            return;
-//        }
-//        String token = authHeader.substring(7);
-//        String email = jwtService.extractUsername(token);
-
         String token = null;
         Cookie[] cookies = request.getCookies();
-//        if(cookies == null){
-//            System.out.println("Cookie is null!");
-//            filterChain.doFilter(request,response);
-//            return;
-//        }
         for(Cookie cookie : cookies){
             if("access_token".equals(cookie.getName())){
                 token = cookie.getValue();

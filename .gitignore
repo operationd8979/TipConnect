@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### firebase ###
+/src/main/resources/tipconnect-14d4b-firebase.json

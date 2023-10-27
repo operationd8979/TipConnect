@@ -6,6 +6,7 @@ import Tip.Connect.model.ErrorReponse;
 import Tip.Connect.model.HttpReponse;
 import Tip.Connect.model.LoginRequest;
 import Tip.Connect.service.AppUserService;
+import Tip.Connect.service.FireBaseService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.ExecutionException;
+
 @RestController
 @RequestMapping(path = "api/v1/auth")
 @RequiredArgsConstructor
@@ -23,6 +26,8 @@ public class AuthController {
 
     private final AppUserService appUserService;
     private final AuthenticationManager authenticationManager;
+
+    private final FireBaseService fireBaseService;
 
 
     @PostMapping("/login")
@@ -57,6 +62,11 @@ public class AuthController {
     public String hello(){
         System.out.println("someone say hello");
         return "hello";
+    }
+
+    @GetMapping("/get")
+    public String getString(@RequestParam String id) throws InterruptedException, ExecutionException {
+        return fireBaseService.getUser(id);
     }
 
 }
