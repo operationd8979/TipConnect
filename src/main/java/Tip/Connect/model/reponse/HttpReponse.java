@@ -1,4 +1,4 @@
-package Tip.Connect.model;
+package Tip.Connect.model.reponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

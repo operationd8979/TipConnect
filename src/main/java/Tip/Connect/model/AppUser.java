@@ -2,12 +2,14 @@ package Tip.Connect.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.checkerframework.checker.units.qual.Length;
+import org.hibernate.annotations.GenericGenerator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 @Getter
 @Setter
@@ -16,25 +18,23 @@ import java.util.Collections;
 @Entity
 public class AppUser implements UserDetails {
 
-    @SequenceGenerator(
-            name = "user_sequence",
-            sequenceName = "user_sequence",
-            allocationSize = 1
-    )
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "user_sequence"
-    )
-    private Long id;
+    @GeneratedValue(generator = "custom-id", strategy = GenerationType.IDENTITY)
+    @GenericGenerator(name = "custom-id", strategy = "Tip.Connect.security.UserIdGenerator")
+    private String id;
     private String firstName;
     private String lastName;
     private String email;
     private String password;
+    @Column(length = 500)
+    private String urlAvatar;
     @Enumerated(EnumType.STRING)
     private AppUserRole appUserRole;
     private boolean looked = false;
     private boolean enabled = false;
+
+    @OneToMany(mappedBy = "user1", cascade = CascadeType.ALL)
+    private List<FriendShip> listFrienst;
 
 
     public AppUser(String firstName,
@@ -47,6 +47,8 @@ public class AppUser implements UserDetails {
         this.email = email;
         this.password = password;
         this.appUserRole = appUserRole;
+        this.listFrienst = new ArrayList<>();
+        this.urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/UserArea%2FurlPic%2Favatar%2FdefaultAvatar.jpg?alt=media&token=a2d3bd79-51f1-453c-a365-4f1a6d57b1da&_gl=1*1vtkw1t*_ga*MTU4MzAyMDEyMS4xNjk4MzI5MTA0*_ga_CW55HF8NVT*MTY5OTA4NjEzMi41LjEuMTY5OTA4NjU2MS4yNi4wLjA.";
     }
 
 
@@ -73,5 +75,10 @@ public class AppUser implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return enabled; }
+    public boolean isEnabled() { return true; }
+
+    public boolean getEnabled() {
+        return this.enabled;
+    }
+
 }

@@ -3,14 +3,16 @@ package Tip.Connect.service;
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.email.EmailSender;
 import Tip.Connect.model.*;
+import Tip.Connect.model.reponse.AuthenticationReponse;
+import Tip.Connect.model.reponse.ErrorReponse;
+import Tip.Connect.model.reponse.HttpReponse;
+import Tip.Connect.model.request.RegisterRequest;
 import Tip.Connect.repository.AppUserRepository;
-import Tip.Connect.utility.CookieUtil;
 import Tip.Connect.validator.EmailValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +54,10 @@ public class RegistrationService {
 
             var userDetails = appUserRepository.findByEmail(request.getEmail()).orElseThrow(()->new IllegalStateException("User not found!"));
             String fullName = userDetails.getFirstName()+" "+userDetails.getLastName();
+            String userId = userDetails.getId();
+            Boolean enable = userDetails.getEnabled();
+            String role = userDetails.getAppUserRole().toString();
+            String urlAvatar = userDetails.getUrlAvatar();
 
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
@@ -68,7 +74,9 @@ public class RegistrationService {
             httpServletResponse.addCookie(accessTokenCookie);
             httpServletResponse.addCookie(refreshTokenCookie);
 
-            return ResponseEntity.ok(new AuthenticationReponse.builder().code(200).fullName(fullName).message(RESPONSE_SUCCESSFUL_MESSAGE).build());
+            return ResponseEntity.ok(new AuthenticationReponse.builder()
+                    .code(200).userId(userId).fullName(fullName).role(role).enable(enable).urlAvatar(urlAvatar)
+                    .message(RESPONSE_SUCCESSFUL_MESSAGE).build());
         }catch (Exception ex){
             return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.UNKNOWN_EXCEPTION.getCode()).errorMessage(ex.getMessage()).build());
         }

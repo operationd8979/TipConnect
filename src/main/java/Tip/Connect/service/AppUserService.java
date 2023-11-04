@@ -1,23 +1,26 @@
 package Tip.Connect.service;
 
 import Tip.Connect.constant.ErrorMessages;
-import Tip.Connect.model.AppUser;
-import Tip.Connect.model.AuthenticationReponse;
-import Tip.Connect.model.ConfirmationToken;
-import Tip.Connect.model.LoginRequest;
+import Tip.Connect.model.*;
+import Tip.Connect.model.reponse.*;
+import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.repository.AppUserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,10 +34,60 @@ public class AppUserService implements UserDetailsService {
     private final ConfirmationTokenService confirmationTokenService;
     private final JwtService jwtService;
 
+
+    public StreamingResponseBody getListFriend(String userId){
+        var userDetails = appUserRepository.findById(userId).orElse(null);
+        if(userDetails == null){
+            return null;
+        }
+        StreamingResponseBody stream = new StreamingResponseBody() {
+            @Override
+            public void writeTo(OutputStream outputStream) throws IOException {
+                List<FriendShip> listFriend = userDetails.getListFrienst();
+
+                AppUser user = new AppUser("Dung","Vo","operationd@gmail.com","123456", AppUserRole.USER);
+                user.setId("1");
+                for(int i = 0;i<100;i++){
+                    String str = Integer.toString(i);
+                    AppUser friend = new AppUser("Dung "+str,"Vo","operationd"+str+"@gmail.com" ,"123456", AppUserRole.USER);
+                    friend.setId("Tip"+str);
+                    listFriend.add(new FriendShip(Integer.toUnsignedLong(i),user,friend, TypeFriendShip.COMMON));
+                }
+
+                if(listFriend!=null){
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    listFriend.forEach(friendShip -> {
+                        try{
+                            String friendShipJson = objectMapper.writeValueAsString(translateFriendShip(friendShip));
+                            outputStream.write(friendShipJson.getBytes());
+                        }catch (IOException e){
+                            e.printStackTrace();
+                        }
+                    });
+                }
+            }
+        };
+        return stream;
+    }
+
+    public FriendShipRespone translateFriendShip(FriendShip friendShip){
+        FriendShipRespone friendShipRespone = new FriendShipRespone();
+        friendShipRespone.setId(friendShip.getFriendShipId());
+        friendShipRespone.setType(friendShip.getType());
+        TinyUser tinyUser = new TinyUser();
+        AppUser user = friendShip.getUser2();
+        tinyUser.setUserId(user.getId());
+        tinyUser.setFullName(user.getFirstName()+" "+user.getLastName());
+        tinyUser.setUrlAvatar(user.getUrlAvatar());
+        friendShipRespone.setFriend(tinyUser);
+        return friendShipRespone;
+    }
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return appUserRepository.findByEmail(email)
-                .orElseThrow(()->new UsernameNotFoundException(String.format(USER_NOT_FOUND_MSG,email)));
+//        return appUserRepository.findByEmail(email)
+//                .orElseThrow(()->new UsernameNotFoundException(String.format(USER_NOT_FOUND_MSG,email)));
+        return appUserRepository.findByEmail(email).orElse(null);
     }
 
     @Transactional
@@ -61,10 +114,14 @@ public class AppUserService implements UserDetailsService {
         }
     }
 
-    public AuthenticationReponse login(LoginRequest request, HttpServletResponse reponse) {
+    public HttpReponse login(LoginRequest request, HttpServletResponse reponse) {
         try{
             var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
+            String userId = userDetails.getId();
             String fullName = userDetails.getFirstName()+" "+userDetails.getLastName();
+            String role = userDetails.getAppUserRole().toString();
+            String urlAvatar = userDetails.getUrlAvatar();
+            boolean enable = userDetails.getEnabled();
 
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
@@ -83,11 +140,18 @@ public class AppUserService implements UserDetailsService {
 
             return new AuthenticationReponse.builder()
                     .code(200)
+                    .userId(userId)
                     .fullName(fullName)
+                    .role(role)
+                    .enable(enable)
+                    .urlAvatar(urlAvatar)
                     .message(null)
                     .build();
         }catch (IllegalStateException ex){
-            return null;
+            return new ErrorReponse.builder()
+                    .code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode())
+                    .errorMessage(ErrorMessages.UNKNOWN_EXCEPTION.getMessage())
+                    .build();
         }
     }
 

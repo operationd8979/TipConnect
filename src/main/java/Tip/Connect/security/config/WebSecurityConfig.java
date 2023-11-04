@@ -28,6 +28,12 @@ public class WebSecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtFilterService jwtFilterService;
 
+    private static final String[] WHITE_LIST_URL = {
+            "/api/v1/registration/**",
+            "/api/v1/auth/**",
+            "/api/user/**"
+    };
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -42,8 +48,7 @@ public class WebSecurityConfig {
                     return configuration;
                 }))
                 .authorizeHttpRequests(requests ->
-                        requests.requestMatchers("/api/v1/registration/**").permitAll()
-                                .requestMatchers("/api/v1/auth/**").permitAll()
+                        requests.requestMatchers(WHITE_LIST_URL).permitAll()
                                 .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtFilterService, UsernamePasswordAuthenticationFilter.class)
@@ -51,15 +56,6 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-//    @Bean
-//    CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-//        configuration.setAllowedMethods(Arrays.asList("GET","POST"));
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
 
     @Bean
     public SessionRegistry sessionRegistry(){

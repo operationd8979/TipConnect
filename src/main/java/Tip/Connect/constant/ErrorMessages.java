@@ -1,6 +1,6 @@
 package Tip.Connect.constant;
 
-import Tip.Connect.model.ErrorReponse;
+import Tip.Connect.model.reponse.ErrorReponse;
 
 public class ErrorMessages {
     private static final String USERNAME_NOT_FOUND_ERROR_MESSAGE = "Username does not exist";

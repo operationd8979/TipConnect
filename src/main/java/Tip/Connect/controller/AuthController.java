@@ -1,10 +1,10 @@
 package Tip.Connect.controller;
 
 import Tip.Connect.constant.ErrorMessages;
-import Tip.Connect.model.AuthenticationReponse;
-import Tip.Connect.model.ErrorReponse;
-import Tip.Connect.model.HttpReponse;
-import Tip.Connect.model.LoginRequest;
+import Tip.Connect.model.reponse.AuthenticationReponse;
+import Tip.Connect.model.reponse.ErrorReponse;
+import Tip.Connect.model.reponse.HttpReponse;
+import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.service.AppUserService;
 import Tip.Connect.service.FireBaseService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ public class AuthController {
     public ResponseEntity<HttpReponse> login(@RequestBody LoginRequest request, HttpServletResponse reponse){
         int code = 200;
         String errorMessage = "";
-        System.out.println("Some one log:" + request.email() + " " + request.password());
+        System.out.println("Some one log: " + request.email() + " " + request.password());
         try{
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(),request.password()));
         }catch (UsernameNotFoundException ex){

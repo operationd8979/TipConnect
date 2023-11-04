@@ -1,4 +1,4 @@
-package Tip.Connect.model;
+package Tip.Connect.model.request;
 
 import lombok.*;
 

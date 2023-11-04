@@ -1,14 +1,14 @@
 package Tip.Connect.controller;
 
-import Tip.Connect.model.ErrorReponse;
-import Tip.Connect.model.HttpReponse;
-import Tip.Connect.model.RegisterRequest;
+import Tip.Connect.model.reponse.HttpReponse;
+import Tip.Connect.model.request.RegisterRequest;
+import Tip.Connect.service.AppUserService;
 import Tip.Connect.service.RegistrationService;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping(path = "api/v1/registration")
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class RegisterController {
 
     private final RegistrationService registrationService;
+    private final AppUserService appUserService;
 
     @PostMapping
     public ResponseEntity<HttpReponse> register(HttpServletResponse httpServletResponse, @RequestBody RegisterRequest request){
@@ -31,6 +32,12 @@ public class RegisterController {
     @GetMapping("/hello")
     public String hello(){
         return "hello";
+    }
+
+    @GetMapping(value = "/getListFriend/{id}")
+    public ResponseEntity<StreamingResponseBody> getListFriend(@PathVariable("id") String userId){
+        System.out.println("Someone get list friend "+ userId);
+        return ResponseEntity.ok(appUserService.getListFriend(userId));
     }
 
 }

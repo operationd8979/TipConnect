@@ -38,7 +38,7 @@ public class ConfirmationToken {
     @ManyToOne
     @JoinColumn(
             nullable = false,
-            name = "app_user_id"
+            name = "userId"
     )
     private AppUser appUser;
 
