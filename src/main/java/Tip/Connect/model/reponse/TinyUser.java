@@ -1,6 +1,7 @@
 package Tip.Connect.model.reponse;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class TinyUser {

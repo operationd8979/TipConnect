@@ -1,5 +1,6 @@
 package Tip.Connect.security.config;
 
+import Tip.Connect.model.AppUserRole;
 import Tip.Connect.service.JwtFilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +32,10 @@ public class WebSecurityConfig {
     private static final String[] WHITE_LIST_URL = {
             "/api/v1/registration/**",
             "/api/v1/auth/**",
-            "/api/user/**"
+    };
+
+    private static final String[] USER_LIST_URL = {
+            "/api/user/**",
     };
 
     @Bean
@@ -49,6 +53,7 @@ public class WebSecurityConfig {
                 }))
                 .authorizeHttpRequests(requests ->
                         requests.requestMatchers(WHITE_LIST_URL).permitAll()
+                                .requestMatchers(USER_LIST_URL).hasAnyAuthority(AppUserRole.USER.toString())
                                 .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtFilterService, UsernamePasswordAuthenticationFilter.class)
