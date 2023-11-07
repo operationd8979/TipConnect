@@ -22,8 +22,7 @@ public class ConnectApplication {
 	public static void main(String[] args) throws IOException {
 
 		Resource resource = new ClassPathResource("tipconnect-14d4b-firebase.json");
-		FileInputStream serviceAccount =
-				new FileInputStream(resource.getFile());
+		FileInputStream serviceAccount = new FileInputStream(resource.getFile());
 		FirebaseOptions options = new FirebaseOptions.Builder()
 				.setCredentials(GoogleCredentials.fromStream(serviceAccount))
 				.build();

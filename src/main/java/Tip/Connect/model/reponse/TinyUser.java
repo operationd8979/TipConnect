@@ -1,18 +1,19 @@
 package Tip.Connect.model.reponse;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class TinyUser {
     private String userId;
     private String fullName;
     private String role;
     private boolean enable;
     private String urlAvatar;
-
-    public TinyUser() {
-    }
 
     public void setFullName(String fullName) {
         this.fullName = fullName;

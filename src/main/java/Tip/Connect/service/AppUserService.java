@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -38,41 +39,6 @@ public class AppUserService implements UserDetailsService {
     private final JwtService jwtService;
 
 
-//    public StreamingResponseBody getListFriend(String userId){
-//        var userDetails = appUserRepository.findById(userId).orElse(null);
-//        if(userDetails == null){
-//            return null;
-//        }
-//        StreamingResponseBody stream = new StreamingResponseBody() {
-//            @Override
-//            public void writeTo(OutputStream outputStream) throws IOException {
-//                List<FriendShip> listFriend = userDetails.getListFrienst();
-//
-//                AppUser user = new AppUser("Dung","Vo","operationd@gmail.com","123456", AppUserRole.USER);
-//                user.setId("1");
-//                for(int i = 0;i<10;i++){
-//                    String str = Integer.toString(i);
-//                    AppUser friend = new AppUser("Dung "+str,"Vo","operationd"+str+"@gmail.com" ,"123456", AppUserRole.USER);
-//                    friend.setId("Tip"+str);
-//                    listFriend.add(new FriendShip(Integer.toUnsignedLong(i),user,friend, TypeFriendShip.COMMON));
-//                }
-//
-//                if(listFriend!=null){
-//                    ObjectMapper objectMapper = new ObjectMapper();
-//                    listFriend.forEach(friendShip -> {
-//                        try{
-//                            String friendShipJson = objectMapper.writeValueAsString(translateFriendShip(friendShip));
-//                            outputStream.write(friendShipJson.getBytes());
-//                        }catch (IOException e){
-//                            e.printStackTrace();
-//                        }
-//                    });
-//                }
-//            }
-//        };
-//        return stream;
-//    }
-
     public StreamingResponseBody getListFriend(String userId){
         var userDetails = appUserRepository.findById(userId).orElse(null);
         if(userDetails == null){
@@ -82,34 +48,37 @@ public class AppUserService implements UserDetailsService {
             @Override
             public void writeTo(OutputStream outputStream) throws IOException {
 
-                List<FriendShip> listFriend = userDetails.getListFrienst();
-                AppUser user = new AppUser("Dung","Vo","operationd@gmail.com","123456", AppUserRole.USER);
-                user.setId("1");
-                for(int i = 0;i<100;i++){
+                List<FriendShipRespone> listFriend = new ArrayList<>();
+                String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/UserArea%2FurlPic%2Favatar%2FdefaultAvatar.jpg?alt=media&token=a2d3bd79-51f1-453c-a365-4f1a6d57b1da&_gl=1*1vtkw1t*_ga*MTU4MzAyMDEyMS4xNjk4MzI5MTA0*_ga_CW55HF8NVT*MTY5OTA4NjEzMi41LjEuMTY5OTA4NjU2MS4yNi4wLjA.";
+                for(int i = 0;i<102;i++){
                     String str = Integer.toString(i);
-                    AppUser friend = new AppUser("Dung "+str,"Vo","operationd"+str+"@gmail.com" ,"123456", AppUserRole.USER);
-                    friend.setId("Tip"+str);
-                    listFriend.add(new FriendShip(Integer.toUnsignedLong(i),user,friend, TypeFriendShip.COMMON));
+                    TinyUser friend = new TinyUser(str,"Name "+str,AppUserRole.USER.toString(),true,urlAvatar);
+                    listFriend.add(new FriendShipRespone(Integer.toUnsignedLong(i),friend, TypeFriendShip.COMMON));
                 }
 
                 ObjectMapper objectMapper = new ObjectMapper();
-                Stream<FriendShip> streamFriend = listFriend.stream();
+                Stream<FriendShipRespone> streamFriend = listFriend.stream();
                 JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
 
                 if(streamFriend!=null){
                     try{
+                        int i = 0;
+                        Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
                         jsonGenerator.writeStartArray();
-                        Iterator<FriendShip> friendShipIterator = streamFriend.iterator();
                         while(friendShipIterator.hasNext()) {
-                            FriendShip friendShip = friendShipIterator.next();
-                            jsonGenerator.writeObject(friendShip);
-
-                            try{
-                                Thread.sleep(300);
-                            }catch (InterruptedException e){
-                                e.printStackTrace();
+                            FriendShipRespone friendShipRespone = friendShipIterator.next();
+                            jsonGenerator.writeObject(friendShipRespone);
+                            i++;
+                            if(i==10){
+                                i = 0;
+                                jsonGenerator.writeEndArray();
+                                jsonGenerator.writeStartArray();
                             }
-
+//                            try{
+//                                Thread.sleep(300);
+//                            }catch (InterruptedException e){
+//                                e.printStackTrace();
+//                            }
                         }
                         jsonGenerator.writeEndArray();
                     }catch (Exception ex){
