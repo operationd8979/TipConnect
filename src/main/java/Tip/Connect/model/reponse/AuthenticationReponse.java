@@ -1,6 +1,7 @@
 package Tip.Connect.model.reponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.NonNull;
 
 
 public class AuthenticationReponse extends HttpReponse {
@@ -15,7 +16,7 @@ public class AuthenticationReponse extends HttpReponse {
         super(code);
     }
 
-    public AuthenticationReponse(int code,String message,TinyUser user){
+    public AuthenticationReponse(@NonNull int code, String message, TinyUser user){
         super(code);
         this.message = message;
         this.user = user;
@@ -72,6 +73,10 @@ public class AuthenticationReponse extends HttpReponse {
         }
         public builder message(String message){
             this.message = message;
+            return this;
+        }
+        public builder tinyUser(TinyUser user){
+            this.user = user;
             return this;
         }
         public AuthenticationReponse build(){

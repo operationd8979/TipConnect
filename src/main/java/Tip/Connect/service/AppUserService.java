@@ -5,6 +5,7 @@ import Tip.Connect.model.*;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.repository.AppUserRepository;
+import Tip.Connect.utility.DataRetrieveUtil;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -38,6 +39,8 @@ public class AppUserService implements UserDetailsService {
     private final ConfirmationTokenService confirmationTokenService;
     private final JwtService jwtService;
 
+    private final DataRetrieveUtil dataRetrieveUtil;
+
 
     public StreamingResponseBody getListFriend(String userId){
         var userDetails = appUserRepository.findById(userId).orElse(null);
@@ -47,8 +50,9 @@ public class AppUserService implements UserDetailsService {
         StreamingResponseBody stream = new StreamingResponseBody() {
             @Override
             public void writeTo(OutputStream outputStream) throws IOException {
+                List<FriendShip> listRaw = userDetails.getListFrienst();
+                List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToTiny(listRaw);
 
-                List<FriendShipRespone> listFriend = new ArrayList<>();
                 String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/UserArea%2FurlPic%2Favatar%2FdefaultAvatar.jpg?alt=media&token=a2d3bd79-51f1-453c-a365-4f1a6d57b1da&_gl=1*1vtkw1t*_ga*MTU4MzAyMDEyMS4xNjk4MzI5MTA0*_ga_CW55HF8NVT*MTY5OTA4NjEzMi41LjEuMTY5OTA4NjU2MS4yNi4wLjA.";
                 for(int i = 0;i<102;i++){
                     String str = Integer.toString(i);
@@ -74,6 +78,7 @@ public class AppUserService implements UserDetailsService {
                                 jsonGenerator.writeEndArray();
                                 jsonGenerator.writeStartArray();
                             }
+
 //                            try{
 //                                Thread.sleep(300);
 //                            }catch (InterruptedException e){
@@ -97,18 +102,6 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
-    public FriendShipRespone translateFriendShip(FriendShip friendShip){
-        FriendShipRespone friendShipRespone = new FriendShipRespone();
-        friendShipRespone.setId(friendShip.getFriendShipId());
-        friendShipRespone.setType(friendShip.getType());
-        TinyUser tinyUser = new TinyUser();
-        AppUser user = friendShip.getUser2();
-        tinyUser.setUserId(user.getId());
-        tinyUser.setFullName(user.getFirstName()+" "+user.getLastName());
-        tinyUser.setUrlAvatar(user.getUrlAvatar());
-        friendShipRespone.setFriend(tinyUser);
-        return friendShipRespone;
-    }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -144,11 +137,13 @@ public class AppUserService implements UserDetailsService {
     public HttpReponse login(LoginRequest request, HttpServletResponse reponse) {
         try{
             var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
-            String userId = userDetails.getId();
-            String fullName = userDetails.getFirstName()+" "+userDetails.getLastName();
-            String role = userDetails.getAppUserRole().toString();
-            String urlAvatar = userDetails.getUrlAvatar();
-            boolean enable = userDetails.getEnabled();
+            TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);
+
+//            String userId = userDetails.getId();
+//            String fullName = userDetails.getFullName();
+//            String role = userDetails.getAppUserRole().toString();
+//            String urlAvatar = userDetails.getUrlAvatar();
+//            boolean enable = userDetails.getEnabled();
 
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
@@ -167,11 +162,7 @@ public class AppUserService implements UserDetailsService {
 
             return new AuthenticationReponse.builder()
                     .code(200)
-                    .userId(userId)
-                    .fullName(fullName)
-                    .role(role)
-                    .enable(enable)
-                    .urlAvatar(urlAvatar)
+                    .tinyUser(tinyUser)
                     .message(null)
                     .build();
         }catch (IllegalStateException ex){

@@ -1,13 +1,14 @@
 package Tip.Connect.model.reponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.NonNull;
 
 public class ErrorReponse extends HttpReponse{
 
     @JsonProperty("error_message")
     private String errorMessage;
 
-    public ErrorReponse(int code,String message){
+    public ErrorReponse(@NonNull int code, String message){
         super(code);
         this.errorMessage = message;
     }

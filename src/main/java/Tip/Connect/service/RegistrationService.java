@@ -6,8 +6,10 @@ import Tip.Connect.model.*;
 import Tip.Connect.model.reponse.AuthenticationReponse;
 import Tip.Connect.model.reponse.ErrorReponse;
 import Tip.Connect.model.reponse.HttpReponse;
+import Tip.Connect.model.reponse.TinyUser;
 import Tip.Connect.model.request.RegisterRequest;
 import Tip.Connect.repository.AppUserRepository;
+import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,6 +30,7 @@ public class RegistrationService {
     private final EmailSender emailSender;
     private final JwtService jwtService;
     private final AppUserRepository appUserRepository;
+    private final DataRetrieveUtil dataRetrieveUtil;
 
     private final String RESPONSE_SUCCESSFUL_MESSAGE = "Your account has been created successfully, an email has been sent to your inbox.Please confirm to activate your account.";
 
@@ -53,11 +56,12 @@ public class RegistrationService {
             emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
 
             var userDetails = appUserRepository.findByEmail(request.getEmail()).orElseThrow(()->new IllegalStateException("User not found!"));
-            String fullName = userDetails.getFirstName()+" "+userDetails.getLastName();
-            String userId = userDetails.getId();
-            Boolean enable = userDetails.getEnabled();
-            String role = userDetails.getAppUserRole().toString();
-            String urlAvatar = userDetails.getUrlAvatar();
+            TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);
+//            String fullName = userDetails.getFullName();
+//            String userId = userDetails.getId();
+//            Boolean enable = userDetails.getEnabled();
+//            String role = userDetails.getAppUserRole().toString();
+//            String urlAvatar = userDetails.getUrlAvatar();
 
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
@@ -75,7 +79,7 @@ public class RegistrationService {
             httpServletResponse.addCookie(refreshTokenCookie);
 
             return ResponseEntity.ok(new AuthenticationReponse.builder()
-                    .code(200).userId(userId).fullName(fullName).role(role).enable(enable).urlAvatar(urlAvatar)
+                    .code(200).tinyUser(tinyUser)
                     .message(RESPONSE_SUCCESSFUL_MESSAGE).build());
         }catch (Exception ex){
             return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.UNKNOWN_EXCEPTION.getCode()).errorMessage(ex.getMessage()).build());

@@ -15,6 +15,12 @@ public class TinyUser {
     private boolean enable;
     private String urlAvatar;
 
+    public TinyUser(String userId,String fullName,String urlAvatar){
+        this.userId = userId;
+        this.fullName = fullName;
+        this.urlAvatar = urlAvatar;
+    }
+
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }

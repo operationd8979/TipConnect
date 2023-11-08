@@ -81,4 +81,8 @@ public class AppUser implements UserDetails {
         return this.enabled;
     }
 
+    public String getFullName(){
+        return this.firstName+" "+this.lastName;
+    }
+
 }
