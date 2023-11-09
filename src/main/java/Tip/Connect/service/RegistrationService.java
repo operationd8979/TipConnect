@@ -57,11 +57,6 @@ public class RegistrationService {
 
             var userDetails = appUserRepository.findByEmail(request.getEmail()).orElseThrow(()->new IllegalStateException("User not found!"));
             TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);
-//            String fullName = userDetails.getFullName();
-//            String userId = userDetails.getId();
-//            Boolean enable = userDetails.getEnabled();
-//            String role = userDetails.getAppUserRole().toString();
-//            String urlAvatar = userDetails.getUrlAvatar();
 
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);

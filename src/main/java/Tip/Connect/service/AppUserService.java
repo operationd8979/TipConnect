@@ -2,13 +2,17 @@ package Tip.Connect.service;
 
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.*;
+import Tip.Connect.model.Record;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.repository.AppUserRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
+import Tip.Connect.validator.EmailValidator;
+import Tip.Connect.validator.PhoneValidator;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +36,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class AppUserService implements UserDetailsService {
 
-    private final String USER_NOT_FOUND_MSG = "user with email %s not found";
-
     private final AppUserRepository appUserRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
@@ -41,6 +43,25 @@ public class AppUserService implements UserDetailsService {
 
     private final DataRetrieveUtil dataRetrieveUtil;
 
+    private final EmailValidator emailValidator;
+    private final PhoneValidator phoneValidator;
+
+
+    public TinyUser searchAimUser(String query){
+        if(emailValidator.test(query)){
+            AppUser user = loadUserByUsername(query);
+            if(user!=null){
+                TinyUser aimUser = dataRetrieveUtil.TranslateAppUserToTiny(user);
+                return aimUser;
+            }
+        }
+        return null;
+    }
+
+    public List<Record> searchMessages(String userID,String query){
+        List<Record> recordList = new ArrayList<>();
+        return recordList;
+    }
 
     public StreamingResponseBody getListFriend(String userId){
         var userDetails = appUserRepository.findById(userId).orElse(null);
@@ -102,14 +123,6 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
-
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        return appUserRepository.findByEmail(email)
-//                .orElseThrow(()->new UsernameNotFoundException(String.format(USER_NOT_FOUND_MSG,email)));
-        return appUserRepository.findByEmail(email).orElse(null);
-    }
-
     @Transactional
     public String signUp(AppUser appUser) {
         try{
@@ -139,12 +152,6 @@ public class AppUserService implements UserDetailsService {
             var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
             TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);
 
-//            String userId = userDetails.getId();
-//            String fullName = userDetails.getFullName();
-//            String role = userDetails.getAppUserRole().toString();
-//            String urlAvatar = userDetails.getUrlAvatar();
-//            boolean enable = userDetails.getEnabled();
-
             final String accessToken = jwtService.generateToken(userDetails);
             final String refreshToken = jwtService.generateRefreshToken(userDetails);
 
@@ -171,6 +178,35 @@ public class AppUserService implements UserDetailsService {
                     .errorMessage(ErrorMessages.UNKNOWN_EXCEPTION.getMessage())
                     .build();
         }
+    }
+
+    @Override
+    public AppUser loadUserByUsername(String email) throws UsernameNotFoundException {
+        return appUserRepository.findByEmail(email).orElse(null);
+    }
+
+    public String getIdByEmail(String email) throws UsernameNotFoundException {
+        var user = appUserRepository.findByEmail(email).orElse(null);
+        return user!=null?user.getId():null;
+    }
+
+    public String getUserIdByHttpRequest(HttpServletRequest request){
+        Cookie[] cookies = request.getCookies();
+        String token = null;
+        if(cookies!=null){
+            for(Cookie cookie: cookies){
+                if("access_token".equals(cookie.getName())){
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        if(token==null){
+            return null;
+        }
+        String email = jwtService.extractUsername(token);
+        String userId = getIdByEmail(email);
+        return userId;
     }
 
     public int enableAppUser(String email) {

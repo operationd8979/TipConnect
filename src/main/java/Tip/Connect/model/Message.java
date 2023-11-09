@@ -1,23 +1,19 @@
 package Tip.Connect.model;
 
+import jakarta.persistence.Entity;
 import lombok.*;
 
+@Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @ToString
-public class Message {
+public class Message extends Record {
 
-    private String sender;
-    private String receiver;
     private String content;
-    private String date;
-    private enum status{
-        JOIN,
-        MESSAGE,
-        LEAVE
-    };
 
+    public Message(AppUser user,AppUser user2,long timeStamp,RecordType type,String content){
+        super(user,user2,timeStamp,type);
+        this.content = content;
+    }
 
 }

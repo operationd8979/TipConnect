@@ -18,11 +18,11 @@ public class FriendShip {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private final AppUser user1;
+    private final AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "friend_id")
-    private final AppUser user2;
+    private final AppUser friend;
 
     @Enumerated(EnumType.STRING)
     private TypeFriendShip type;
