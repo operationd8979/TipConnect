@@ -5,6 +5,7 @@ import Tip.Connect.model.*;
 import Tip.Connect.model.Record;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
+import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.repository.AppUserRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,6 +27,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.http.HttpRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -63,8 +66,39 @@ public class AppUserService implements UserDetailsService {
         return recordList;
     }
 
-    public StreamingResponseBody getListFriend(String userId){
-        var userDetails = appUserRepository.findById(userId).orElse(null);
+    public HttpReponse getUserInfo(String userID){
+        var userDetails = appUserRepository.findById(userID).orElse(null);
+        if(userDetails == null){
+            return null;
+        }
+        TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);
+        return new AuthenticationReponse.builder()
+                .code(200)
+                .tinyUser(tinyUser)
+                .message(null)
+                .build();
+    }
+
+    public HttpReponse updateUserInfo(HttpServletRequest request, UpdateRequest updateRequest){
+        var user = getUserByHttpRequest(request);
+        if(user==null){
+            return new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build();
+        }
+        if(!bCryptPasswordEncoder.matches(updateRequest.password(),user.getPassword())){
+            return new ErrorReponse.builder().code(ErrorMessages.ILLEGAL_PASSWORD.getCode()).errorMessage(ErrorMessages.ILLEGAL_PASSWORD.getMessage()).build();
+        }
+        user.setFirstName(updateRequest.firstName());
+        user.setLastName(updateRequest.lastName());
+        if(updateRequest.newPassword()!=""&&updateRequest.newPassword()!=null){
+            user.setPassword(bCryptPasswordEncoder.encode(updateRequest.newPassword()));
+        }
+        appUserRepository.save(user);
+        TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(user);
+        return new AuthenticationReponse.builder().code(200).tinyUser(tinyUser).build();
+    }
+
+    public StreamingResponseBody getListFriend(String userID){
+        var userDetails = appUserRepository.findById(userID).orElse(null);
         if(userDetails == null){
             return null;
         }
@@ -77,7 +111,7 @@ public class AppUserService implements UserDetailsService {
                 String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/UserArea%2FurlPic%2Favatar%2FdefaultAvatar.jpg?alt=media&token=a2d3bd79-51f1-453c-a365-4f1a6d57b1da&_gl=1*1vtkw1t*_ga*MTU4MzAyMDEyMS4xNjk4MzI5MTA0*_ga_CW55HF8NVT*MTY5OTA4NjEzMi41LjEuMTY5OTA4NjU2MS4yNi4wLjA.";
                 for(int i = 0;i<102;i++){
                     String str = Integer.toString(i);
-                    TinyUser friend = new TinyUser(str,"Name "+str,AppUserRole.USER.toString(),true,urlAvatar);
+                    TinyUser friend = new TinyUser(str,"Name",str,"Name "+str,urlAvatar);
                     listFriend.add(new FriendShipRespone(Integer.toUnsignedLong(i),friend, TypeFriendShip.COMMON));
                 }
 
@@ -207,6 +241,25 @@ public class AppUserService implements UserDetailsService {
         String email = jwtService.extractUsername(token);
         String userId = getIdByEmail(email);
         return userId;
+    }
+
+    public AppUser getUserByHttpRequest(HttpServletRequest request){
+        Cookie[] cookies = request.getCookies();
+        String token = null;
+        if(cookies!=null){
+            for(Cookie cookie: cookies){
+                if("access_token".equals(cookie.getName())){
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        if(token==null){
+            return null;
+        }
+        String email = jwtService.extractUsername(token);
+        AppUser user = loadUserByUsername(email);
+        return user;
     }
 
     public int enableAppUser(String email) {

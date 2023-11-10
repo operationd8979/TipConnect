@@ -43,6 +43,27 @@ public class AuthenticationReponse extends HttpReponse {
             this.user.setUserId(userId);
             return this;
         }
+        public builder email(String email){
+            if(this.user==null){
+                this.user = new TinyUser();
+            }
+            this.user.setEmail(email);
+            return this;
+        }
+        public builder firstName(String firstName){
+            if(this.user==null){
+                this.user = new TinyUser();
+            }
+            this.user.setFirstName(firstName);
+            return this;
+        }
+        public builder lastName(String lastName){
+            if(this.user==null){
+                this.user = new TinyUser();
+            }
+            this.user.setLastName(lastName);
+            return this;
+        }
         public builder fullName(String fullName){
             if(this.user==null){
                 this.user = new TinyUser();

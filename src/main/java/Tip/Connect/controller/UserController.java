@@ -7,6 +7,8 @@ import Tip.Connect.model.reponse.ErrorReponse;
 import Tip.Connect.model.reponse.HttpReponse;
 import Tip.Connect.model.reponse.SearchResponse;
 import Tip.Connect.model.reponse.TinyUser;
+import Tip.Connect.model.request.LoginRequest;
+import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.service.AppUserService;
 import Tip.Connect.service.JwtService;
 import Tip.Connect.utility.DataRetrieveUtil;
@@ -16,10 +18,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
@@ -30,6 +29,22 @@ import java.util.List;
 public class UserController {
 
     private final AppUserService appUserService;
+
+    @GetMapping(value = "/getUserInfo")
+    public ResponseEntity<HttpReponse> getUserInfo(HttpServletRequest request){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
+        }
+        return ResponseEntity.ok(appUserService.getUserInfo(userID));
+    }
+
+    @PostMapping(value = "/updateUserInfo")
+    public ResponseEntity<HttpReponse> updateUserInfo(HttpServletRequest request,@RequestBody UpdateRequest updateRequest){
+        System.out.println(request);
+        System.out.println(updateRequest);
+        return ResponseEntity.ok(appUserService.updateUserInfo(request,updateRequest));
+    }
 
     @GetMapping(value = "/getListFriend")
     public ResponseEntity<StreamingResponseBody> getListFriend(HttpServletRequest request){

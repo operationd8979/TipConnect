@@ -21,7 +21,7 @@ public class DataRetrieveUtil {
 
 
     public TinyUser TranslateAppUserToTiny(AppUser user){
-        TinyUser tinyUser = new TinyUser(user.getId(),user.getFullName(),user.getAppUserRole().toString(),user.getEnabled(),user.getUrlAvatar());
+        TinyUser tinyUser = new TinyUser(user.getId(),user.getEmail(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getAppUserRole().toString(),user.getEnabled(),user.getUrlAvatar());
         return tinyUser;
     }
 
@@ -29,7 +29,7 @@ public class DataRetrieveUtil {
         List<FriendShipRespone> listFriendResponse = new ArrayList<>();
         for(FriendShip friendShip: listFriend){
             AppUser user = friendShip.getFriend();
-            TinyUser tinyUser = new TinyUser(user.getId(),user.getFullName(),user.getUrlAvatar());
+            TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
             FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId(),tinyUser,friendShip.getType());
             listFriendResponse.add(friendShipRespone);
         }
