@@ -157,7 +157,7 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
-    @Transactional
+    @Transactional()
     public String signUp(AppUser appUser) {
         try{
             boolean userExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();

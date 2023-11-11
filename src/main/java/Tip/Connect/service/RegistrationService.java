@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +35,7 @@ public class RegistrationService {
 
     private final String RESPONSE_SUCCESSFUL_MESSAGE = "Your account has been created successfully, an email has been sent to your inbox.Please confirm to activate your account.";
 
-    @Transactional
+    @Transactional()
     public ResponseEntity<HttpReponse> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
         try{
             boolean isValidEmail = emailValidator.test(request.getEmail());
@@ -77,9 +78,11 @@ public class RegistrationService {
                     .code(200).tinyUser(tinyUser)
                     .message(RESPONSE_SUCCESSFUL_MESSAGE).build());
         }catch (Exception ex){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.UNKNOWN_EXCEPTION.getCode()).errorMessage(ex.getMessage()).build());
         }
     }
+
 
     public ResponseEntity<String> confirmToken(String token) {
         ConfirmationToken confirmationToken = confirmationTokenService
