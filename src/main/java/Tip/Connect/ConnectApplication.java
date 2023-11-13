@@ -25,7 +25,7 @@ public class ConnectApplication {
 		FileInputStream serviceAccount = new FileInputStream(resource.getFile());
 		FirebaseOptions options = new FirebaseOptions.Builder()
 				.setCredentials(GoogleCredentials.fromStream(serviceAccount))
-				.setStorageBucket("gs://tipconnect-14d4b.appspot.com/")
+				.setStorageBucket("tipconnect-14d4b.appspot.com")
 				.build();
 		if(FirebaseApp.getApps().isEmpty()) { //<--- check with this line
 			FirebaseApp.initializeApp(options);

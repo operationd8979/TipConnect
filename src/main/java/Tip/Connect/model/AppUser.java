@@ -48,7 +48,7 @@ public class AppUser implements UserDetails {
         this.password = password;
         this.appUserRole = appUserRole;
         this.listFrienst = new ArrayList<>();
-        this.urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/UserArea%2FurlPic%2Favatar%2FdefaultAvatar.jpg?alt=media&token=a2d3bd79-51f1-453c-a365-4f1a6d57b1da&_gl=1*1vtkw1t*_ga*MTU4MzAyMDEyMS4xNjk4MzI5MTA0*_ga_CW55HF8NVT*MTY5OTA4NjEzMi41LjEuMTY5OTA4NjU2MS4yNi4wLjA.";
+        this.urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
     }
 
 

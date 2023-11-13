@@ -8,8 +8,10 @@ import Tip.Connect.model.reponse.HttpReponse;
 import Tip.Connect.model.reponse.SearchResponse;
 import Tip.Connect.model.reponse.TinyUser;
 import Tip.Connect.model.request.LoginRequest;
+import Tip.Connect.model.request.UpdateAvatarRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.service.AppUserService;
+import Tip.Connect.service.FireBaseService;
 import Tip.Connect.service.JwtService;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
@@ -22,6 +24,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -30,6 +36,7 @@ import java.util.List;
 public class UserController {
 
     private final AppUserService appUserService;
+    private final FireBaseService fireBaseService;
 
     @GetMapping(value = "/getUserInfo")
     public ResponseEntity<HttpReponse> getUserInfo(HttpServletRequest request){
@@ -42,17 +49,12 @@ public class UserController {
 
     @PostMapping(value = "/updateUserInfo")
     public ResponseEntity<HttpReponse> updateUserInfo(HttpServletRequest request,@RequestBody UpdateRequest updateRequest){
-        System.out.println(request);
-        System.out.println(updateRequest);
         return ResponseEntity.ok(appUserService.updateUserInfo(request,updateRequest));
     }
 
     @PostMapping("/updateAvatar")
-    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) {
-        System.out.println("call update avatar");
-        String fileName = file.getOriginalFilename();
-        System.out.println(file);
-        return ResponseEntity.ok("File uploaded successfully: " + fileName);
+    public ResponseEntity<HttpReponse> updateAvatar(HttpServletRequest request, @RequestBody UpdateAvatarRequest updateAvatarRequest) throws UnsupportedEncodingException {
+        return ResponseEntity.ok(appUserService.updateAvatar(request,updateAvatarRequest.urlAvatar()));
     }
 
     @GetMapping(value = "/getListFriend")
