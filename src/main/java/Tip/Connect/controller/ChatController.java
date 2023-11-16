@@ -1,32 +1,39 @@
 package Tip.Connect.controller;
 
 
-import Tip.Connect.model.Message;
-import org.springframework.beans.factory.annotation.Autowired;
+import Tip.Connect.model.Chat.MessageChat;
+import Tip.Connect.service.ChatService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 @Controller
+@RequiredArgsConstructor
 public class ChatController {
 
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
-    @MessageMapping("/all") //app/message
-    @SendTo("/all")
-    private Message receivePublicMessage(@Payload Message message){
+    private final ChatService chatService;
+
+    @MessageMapping("/all")
+    @SendTo("/all/messages")
+    private MessageChat receivePublicMessage(@Payload MessageChat message, Principal principal){
+        System.out.println("nhận tin nhắn from: "+principal.getName());
+        message.setFrom(principal.getName());
         return message;
     }
 
     @MessageMapping("/private")
-    private Message receivePrivateMessage(@Payload Message message, Principal principal){
-        simpMessagingTemplate.convertAndSendToUser(message.getReceiver().getFullName(),"/private",message);
-        return message;
+    private void receivePrivateMessage(@Payload MessageChat chat, Principal principal){
+        System.out.println("nhận tin nhắn private from: "+principal.getName() +" to: "+chat.getTo());
+        chat.setFrom(principal.getName());
+        MessageChat message = chatService.saveMessage(chat);
+        if(message!=null){
+            simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",message);
+        }
     }
 
 

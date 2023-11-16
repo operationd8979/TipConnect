@@ -1,10 +1,9 @@
-package Tip.Connect.model;
+package Tip.Connect.model.Auth;
 
+import Tip.Connect.model.Relationship.FriendShip;
 import jakarta.persistence.*;
 import lombok.*;
-import org.checkerframework.checker.units.qual.Length;
 import org.hibernate.annotations.GenericGenerator;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

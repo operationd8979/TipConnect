@@ -1,9 +1,7 @@
 package Tip.Connect.model.reponse;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @NoArgsConstructor
@@ -16,6 +14,7 @@ public class TinyUser {
     private String role;
     private boolean enable;
     private String urlAvatar;
+    private StateAimUser state = StateAimUser.AVAIBLE;
 
     public TinyUser(String userID,String email,String firstName,String lastName,String fullName,String role,boolean enable,String urlAvatar){
         this.userID = userID;
@@ -60,4 +59,5 @@ public class TinyUser {
         this.userID = userId;
     }
     public void setUrlAvatar(String urlAvatar) { this.urlAvatar = urlAvatar; }
+    public void setState(StateAimUser state) { this.state = state; }
 }

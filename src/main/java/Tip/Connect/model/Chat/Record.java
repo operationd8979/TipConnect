@@ -1,7 +1,7 @@
-package Tip.Connect.model;
+package Tip.Connect.model.Chat;
 
+import Tip.Connect.model.Auth.AppUser;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,6 +32,8 @@ public class Record {
     private AppUser receiver;
 
     private long timestamp;
+
+    private boolean seen = false;
 
     private RecordType type;
 

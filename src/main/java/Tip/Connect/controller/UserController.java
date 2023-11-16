@@ -1,33 +1,19 @@
 package Tip.Connect.controller;
 
 import Tip.Connect.constant.ErrorMessages;
-import Tip.Connect.model.AppUser;
-import Tip.Connect.model.Record;
-import Tip.Connect.model.reponse.ErrorReponse;
-import Tip.Connect.model.reponse.HttpReponse;
-import Tip.Connect.model.reponse.SearchResponse;
-import Tip.Connect.model.reponse.TinyUser;
-import Tip.Connect.model.request.LoginRequest;
+import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.UpdateAvatarRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.service.AppUserService;
 import Tip.Connect.service.FireBaseService;
-import Tip.Connect.service.JwtService;
-import Tip.Connect.utility.DataRetrieveUtil;
-import Tip.Connect.validator.EmailValidator;
-import Tip.Connect.validator.PhoneValidator;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -69,19 +55,28 @@ public class UserController {
 
     @GetMapping(value = "/search/{query}&{offset}&{limit}")
     public ResponseEntity<HttpReponse> search(HttpServletRequest request,@PathVariable("query") String query, @PathVariable("offset") String offset, @PathVariable("limit") String limit) {
-        System.out.println("Some one call search API");
         String userID = appUserService.getUserIdByHttpRequest(request);
         if(userID==null){
             return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
         }
         //check email or number return userAim
-        TinyUser aimUser = appUserService.searchAimUser(query);
+        TinyUser aimUser = appUserService.searchAimUser(userID,query);
         //return all message match
         List<Record> messages = appUserService.searchMessages(userID,query);
         //filter with range for messages
 
         //return response
         return ResponseEntity.ok(new SearchResponse.builder().code(200).tinyUser(aimUser).listMessage(messages).build());
+    }
+
+    @GetMapping(value = "/add/{friendID}")
+    public ResponseEntity<HttpReponse> addFriend(HttpServletRequest request,@PathVariable("friendID") String friendID){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
+        }
+        appUserService.addFriend(userID,friendID);
+        return ResponseEntity.ok(new MessageResponse(200,"OK"));
     }
 
 

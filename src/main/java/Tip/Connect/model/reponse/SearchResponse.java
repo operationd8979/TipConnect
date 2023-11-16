@@ -1,6 +1,6 @@
 package Tip.Connect.model.reponse;
 
-import Tip.Connect.model.Record;
+import Tip.Connect.model.Chat.Record;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.NonNull;
 

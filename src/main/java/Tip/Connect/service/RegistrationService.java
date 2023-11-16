@@ -2,7 +2,9 @@ package Tip.Connect.service;
 
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.email.EmailSender;
-import Tip.Connect.model.*;
+import Tip.Connect.model.Auth.AppUser;
+import Tip.Connect.model.Auth.AppUserRole;
+import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.model.reponse.AuthenticationReponse;
 import Tip.Connect.model.reponse.ErrorReponse;
 import Tip.Connect.model.reponse.HttpReponse;

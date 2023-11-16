@@ -1,6 +1,6 @@
 package Tip.Connect.security.config;
 
-import Tip.Connect.model.AppUserRole;
+import Tip.Connect.model.Auth.AppUserRole;
 import Tip.Connect.service.JwtFilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +14,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,9 +27,14 @@ public class WebSecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtFilterService jwtFilterService;
 
+    private static final String[] DOMAIN_FRIEND = {
+            "http://localhost:3000"
+    };
+
     private static final String[] WHITE_LIST_URL = {
             "/api/v1/registration/**",
             "/api/v1/auth/**",
+            "/ws/**"
     };
 
     private static final String[] USER_LIST_URL = {
@@ -44,7 +47,7 @@ public class WebSecurityConfig {
                 .csrf(csrf->csrf.disable())
                 .cors(cors->cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+                    configuration.setAllowedOrigins(Arrays.stream(DOMAIN_FRIEND).toList());
                     configuration.setAllowedMethods(List.of("HEAD","GET","POST","PUT","DELETE","PATCH","OPTIONS"));
                     configuration.setAllowCredentials(true);
                     configuration.addExposedHeader("Message");

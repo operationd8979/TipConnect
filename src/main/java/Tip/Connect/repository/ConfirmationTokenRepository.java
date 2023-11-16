@@ -1,6 +1,6 @@
 package Tip.Connect.repository;
 
-import Tip.Connect.model.ConfirmationToken;
+import Tip.Connect.model.Auth.ConfirmationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,12 +1,16 @@
 package Tip.Connect.service;
 
 import Tip.Connect.constant.ErrorMessages;
-import Tip.Connect.model.*;
-import Tip.Connect.model.Record;
+import Tip.Connect.model.Auth.AppUser;
+import Tip.Connect.model.Auth.ConfirmationToken;
+import Tip.Connect.model.Relationship.FriendShip;
+import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.Relationship.RequestAddFriend;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.repository.AppUserRepository;
+import Tip.Connect.repository.RequestAddFriendRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import Tip.Connect.validator.PhoneValidator;
@@ -17,7 +21,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,9 +28,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.http.HttpRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -40,6 +40,8 @@ import java.util.stream.Stream;
 public class AppUserService implements UserDetailsService {
 
     private final AppUserRepository appUserRepository;
+    private final RequestAddFriendRepository requestAddFriendRepository;
+
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
     private final JwtService jwtService;
@@ -50,11 +52,21 @@ public class AppUserService implements UserDetailsService {
     private final PhoneValidator phoneValidator;
 
 
-    public TinyUser searchAimUser(String query){
-        if(emailValidator.test(query)){
+    public TinyUser searchAimUser(String userID,String query){
+        var userDetails = appUserRepository.findById(userID).orElse(null);
+        if(emailValidator.test(query)||userDetails==null){
             AppUser user = loadUserByUsername(query);
             if(user!=null){
                 TinyUser aimUser = dataRetrieveUtil.TranslateAppUserToTiny(user);
+                if(aimUser.getUserID().equals(userID)){
+                    aimUser.setState(StateAimUser.SELF);
+                }
+                if(user.getListFrienst().stream().anyMatch(f->f.getFriend().getEmail().equals(query))){
+                    aimUser.setState(StateAimUser.FRIEND);
+                }
+                if(requestAddFriendRepository.findByReceiver(user).isPresent()){
+                    aimUser.setState(StateAimUser.ONWAIT);
+                }
                 return aimUser;
             }
         }
@@ -113,59 +125,67 @@ public class AppUserService implements UserDetailsService {
         if(userDetails == null){
             return null;
         }
-        StreamingResponseBody stream = new StreamingResponseBody() {
-            @Override
-            public void writeTo(OutputStream outputStream) throws IOException {
-                List<FriendShip> listRaw = userDetails.getListFrienst();
-                List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToTiny(listRaw);
+        StreamingResponseBody stream = outputStream -> {
+            List<FriendShip> listRaw = userDetails.getListFrienst();
+            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToTiny(listRaw);
 
-                String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
-                for(int i = 0;i<102;i++){
-                    String str = Integer.toString(i);
-                    TinyUser friend = new TinyUser(str,"Name",str,"Name "+str,urlAvatar);
-                    listFriend.add(new FriendShipRespone(Integer.toUnsignedLong(i),friend, TypeFriendShip.COMMON));
-                }
+//            String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
+//            for(int i = 0;i<102;i++){
+//                String str = Integer.toString(i);
+//                TinyUser friend = new TinyUser(str,"Name",str,"Name "+str,urlAvatar);
+//                listFriend.add(new FriendShipRespone(Integer.toUnsignedLong(i),friend, TypeFriendShip.COMMON));
+//            }
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                Stream<FriendShipRespone> streamFriend = listFriend.stream();
-                JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<FriendShipRespone> streamFriend = listFriend.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
 
-                if(streamFriend!=null){
-                    try{
-                        int i = 0;
-                        Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
-                        jsonGenerator.writeStartArray();
-                        while(friendShipIterator.hasNext()) {
-                            FriendShipRespone friendShipRespone = friendShipIterator.next();
-                            jsonGenerator.writeObject(friendShipRespone);
-                            i++;
-                            if(i==10){
-                                i = 0;
-                                jsonGenerator.writeEndArray();
-                                jsonGenerator.writeStartArray();
-                            }
+            if(streamFriend!=null){
+                try{
+                    int i = 0;
+                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(friendShipIterator.hasNext()) {
+                        FriendShipRespone friendShipRespone = friendShipIterator.next();
+                        jsonGenerator.writeObject(friendShipRespone);
+                        i++;
+                        if(i==10){
+                            i = 0;
+                            jsonGenerator.writeEndArray();
+                            jsonGenerator.writeStartArray();
+                        }
 
 //                            try{
 //                                Thread.sleep(300);
 //                            }catch (InterruptedException e){
 //                                e.printStackTrace();
 //                            }
-                        }
-                        jsonGenerator.writeEndArray();
-                    }catch (Exception ex){
-                        ex.printStackTrace();
-                    }finally {
-                        if(streamFriend != null) {
-                            streamFriend.close();
-                        }
-                        if(jsonGenerator != null)  {
-                            jsonGenerator.close();
-                        }
+
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(streamFriend != null) {
+                        streamFriend.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
                     }
                 }
             }
         };
         return stream;
+    }
+
+    public void addFriend(String userID,String friendID){
+        AppUser user = appUserRepository.findById(userID).orElse(null);
+        AppUser friend = appUserRepository.findById(friendID).orElse(null);
+        if(user==null||friend==null){
+            return;
+        }
+        RequestAddFriend request = new RequestAddFriend(user,friend);
+        requestAddFriendRepository.save(request);
     }
 
     @Transactional()
@@ -228,6 +248,10 @@ public class AppUserService implements UserDetailsService {
     @Override
     public AppUser loadUserByUsername(String email) throws UsernameNotFoundException {
         return appUserRepository.findByEmail(email).orElse(null);
+    }
+
+    public AppUser loadUserByUserid(String userID) throws UsernameNotFoundException {
+        return appUserRepository.findById(userID).orElse(null);
     }
 
     public String getIdByEmail(String email) throws UsernameNotFoundException {

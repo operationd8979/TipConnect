@@ -1,6 +1,6 @@
 package Tip.Connect.model.reponse;
 
-import Tip.Connect.model.TypeFriendShip;
+import Tip.Connect.model.Relationship.TypeFriendShip;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

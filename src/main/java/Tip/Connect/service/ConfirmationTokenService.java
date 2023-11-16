@@ -1,6 +1,6 @@
 package Tip.Connect.service;
 
-import Tip.Connect.model.ConfirmationToken;
+import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.repository.ConfirmationTokenRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

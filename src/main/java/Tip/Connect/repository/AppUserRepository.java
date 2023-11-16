@@ -1,6 +1,6 @@
 package Tip.Connect.repository;
 
-import Tip.Connect.model.AppUser;
+import Tip.Connect.model.Auth.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

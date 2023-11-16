@@ -1,9 +1,9 @@
-package Tip.Connect.model;
+package Tip.Connect.model.Relationship;
 
+import Tip.Connect.model.Auth.AppUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
@@ -14,7 +14,7 @@ public class FriendShip {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private final Long friendShipId;
+    private Long friendShipId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

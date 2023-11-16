@@ -1,4 +1,4 @@
-package Tip.Connect.model;
+package Tip.Connect.model.Auth;
 
 public enum AppUserRole {
     USER,
