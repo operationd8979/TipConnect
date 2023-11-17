@@ -7,17 +7,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class RequestAddFriend {
+public class FriendRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long requestID;
 
+    private long timeStamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
@@ -30,9 +33,10 @@ public class RequestAddFriend {
     private boolean enable=false;
 
 
-    public RequestAddFriend(AppUser sender,AppUser receiver){
+    public FriendRequest(AppUser sender,AppUser receiver){
         this.sender = sender;
         this.receiver = receiver;
+        this.timeStamp = new Date().getTime();
     }
 
 }

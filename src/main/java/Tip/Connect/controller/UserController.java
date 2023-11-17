@@ -45,11 +45,11 @@ public class UserController {
 
     @GetMapping(value = "/getListFriend")
     public ResponseEntity<StreamingResponseBody> getListFriend(HttpServletRequest request){
-        String userId = appUserService.getUserIdByHttpRequest(request);
-        if(userId==null){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
             return ResponseEntity.ok(null);
         }
-        return ResponseEntity.ok(appUserService.getListFriend(userId));
+        return ResponseEntity.ok(appUserService.getListFriend(userID));
     }
 
 
@@ -77,6 +77,15 @@ public class UserController {
         }
         appUserService.addFriend(userID,friendID);
         return ResponseEntity.ok(new MessageResponse(200,"OK"));
+    }
+
+    @GetMapping(value = "/getFriendRequests")
+    public ResponseEntity<StreamingResponseBody> getFriendRequest(HttpServletRequest request){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(null);
+        }
+        return ResponseEntity.ok(appUserService.getFriendRequests(userID));
     }
 
 

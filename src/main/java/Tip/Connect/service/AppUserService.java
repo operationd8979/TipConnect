@@ -3,14 +3,14 @@ package Tip.Connect.service;
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
+import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
 import Tip.Connect.model.Chat.Record;
-import Tip.Connect.model.Relationship.RequestAddFriend;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.repository.AppUserRepository;
-import Tip.Connect.repository.RequestAddFriendRepository;
+import Tip.Connect.repository.FriendRequestRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import Tip.Connect.validator.PhoneValidator;
@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 public class AppUserService implements UserDetailsService {
 
     private final AppUserRepository appUserRepository;
-    private final RequestAddFriendRepository requestAddFriendRepository;
+    private final FriendRequestRepository friendRequestRepository;
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
@@ -64,7 +64,7 @@ public class AppUserService implements UserDetailsService {
                 if(user.getListFrienst().stream().anyMatch(f->f.getFriend().getEmail().equals(query))){
                     aimUser.setState(StateAimUser.FRIEND);
                 }
-                if(requestAddFriendRepository.findByReceiver(user).isPresent()){
+                if(friendRequestRepository.findByReceiver(user).isPresent()){
                     aimUser.setState(StateAimUser.ONWAIT);
                 }
                 return aimUser;
@@ -178,14 +178,58 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
+    public StreamingResponseBody getFriendRequests(String userID) {
+        AppUser userDetails = appUserRepository.findById(userID).orElse(null);
+        if(userDetails == null){
+            return null;
+        }
+        StreamingResponseBody stream = outputStream -> {
+            List<FriendRequest> listRaw = friendRequestRepository.findAll().stream().filter(r->r.getReceiver()==userDetails).toList();
+            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToTiny(listRaw);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<FriendShipRespone> streamFriend = listFriend.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+
+            if(streamFriend!=null){
+                try{
+                    int i = 0;
+                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(friendShipIterator.hasNext()) {
+                        FriendShipRespone friendShipRespone = friendShipIterator.next();
+                        jsonGenerator.writeObject(friendShipRespone);
+                        i++;
+                        if(i==10){
+                            i = 0;
+                            jsonGenerator.writeEndArray();
+                            jsonGenerator.writeStartArray();
+                        }
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(streamFriend != null) {
+                        streamFriend.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return stream;
+    }
+
     public void addFriend(String userID,String friendID){
         AppUser user = appUserRepository.findById(userID).orElse(null);
         AppUser friend = appUserRepository.findById(friendID).orElse(null);
         if(user==null||friend==null){
             return;
         }
-        RequestAddFriend request = new RequestAddFriend(user,friend);
-        requestAddFriendRepository.save(request);
+        FriendRequest request = new FriendRequest(user,friend);
+        friendRequestRepository.save(request);
     }
 
     @Transactional()
@@ -317,4 +361,6 @@ public class AppUserService implements UserDetailsService {
                     .fullName(ex.getMessage()).build();
         }
     }
+
+
 }
