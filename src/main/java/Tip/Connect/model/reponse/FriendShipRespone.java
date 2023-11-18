@@ -14,7 +14,7 @@ import lombok.Setter;
 public class FriendShipRespone {
 
     @JsonProperty("id")
-    private long id;
+    private String id;
     @JsonProperty("friend")
     private TinyUser friend;
     @JsonProperty("type")

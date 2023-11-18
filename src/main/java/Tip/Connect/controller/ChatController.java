@@ -1,7 +1,7 @@
 package Tip.Connect.controller;
 
 
-import Tip.Connect.model.Chat.MessageChat;
+import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.*;
@@ -14,9 +14,10 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class ChatController {
 
+    private final ChatService chatService;
+
     private final SimpMessagingTemplate simpMessagingTemplate;
 
-    private final ChatService chatService;
 
     @MessageMapping("/all")
     @SendTo("/all/messages")

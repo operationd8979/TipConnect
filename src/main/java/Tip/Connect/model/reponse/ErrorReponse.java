@@ -3,7 +3,7 @@ package Tip.Connect.model.reponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.NonNull;
 
-public class ErrorReponse extends HttpReponse{
+public class ErrorReponse extends HttpResponse{
 
     @JsonProperty("error_message")
     private String errorMessage;

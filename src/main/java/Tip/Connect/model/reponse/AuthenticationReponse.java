@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.NonNull;
 
 
-public class AuthenticationReponse extends HttpReponse {
+public class AuthenticationReponse extends HttpResponse {
 
     @JsonProperty("user")
     private TinyUser user;

@@ -2,7 +2,7 @@ package Tip.Connect.model.reponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class MessageResponse extends HttpReponse{
+public class MessageResponse extends HttpResponse{
 
     @JsonProperty("message")
     private String message;

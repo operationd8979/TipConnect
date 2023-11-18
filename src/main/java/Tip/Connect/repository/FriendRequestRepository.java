@@ -10,9 +10,9 @@ import java.util.Optional;
 
 @Repository
 @Transactional(readOnly = true)
-public interface FriendRequestRepository  extends JpaRepository<FriendRequest, Long> {
-    Optional<FriendRequest> findByRequestID(Long id);
-    Optional<FriendRequest> findByReceiver(AppUser receiver);
+public interface FriendRequestRepository  extends JpaRepository<FriendRequest, String> {
+    Optional<FriendRequest> findByRequestID(String id);
+
 }
 
 

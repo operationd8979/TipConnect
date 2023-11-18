@@ -14,7 +14,7 @@ import lombok.Setter;
 public class FriendRResponse {
 
     @JsonProperty("id")
-    private long id;
+    private String id;
     @JsonProperty("sender")
     private TinyUser sender;
     @JsonProperty("time_stamp")

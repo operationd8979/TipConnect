@@ -7,7 +7,7 @@ import Tip.Connect.model.Auth.AppUserRole;
 import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.model.reponse.AuthenticationReponse;
 import Tip.Connect.model.reponse.ErrorReponse;
-import Tip.Connect.model.reponse.HttpReponse;
+import Tip.Connect.model.reponse.HttpResponse;
 import Tip.Connect.model.reponse.TinyUser;
 import Tip.Connect.model.request.RegisterRequest;
 import Tip.Connect.repository.AppUserRepository;
@@ -38,7 +38,7 @@ public class RegistrationService {
     private final String RESPONSE_SUCCESSFUL_MESSAGE = "Your account has been created successfully, an email has been sent to your inbox.Please confirm to activate your account.";
 
     @Transactional()
-    public ResponseEntity<HttpReponse> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
+    public ResponseEntity<HttpResponse> register(HttpServletResponse httpServletResponse, RegisterRequest request) {
         try{
             boolean isValidEmail = emailValidator.test(request.getEmail());
             if(!isValidEmail){

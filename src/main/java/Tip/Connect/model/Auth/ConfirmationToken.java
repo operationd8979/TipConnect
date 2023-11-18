@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 
@@ -13,17 +14,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ConfirmationToken {
 
-    @SequenceGenerator(
-            name = "confirmation_token_sequence",
-            sequenceName = "confirmation_token_sequence",
-            allocationSize = 1
-    )
+//    @SequenceGenerator(
+//            name = "confirmation_token_sequence",
+//            sequenceName = "confirmation_token_sequence",
+//            allocationSize = 1
+//    )
+//    @Id
+//    @GeneratedValue(
+//            strategy = GenerationType.SEQUENCE,
+//            generator = "confirmation_token_sequence"
+//    )
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "confirmation_token_sequence"
-    )
-    private Long id;
+    @GeneratedValue(generator = "custom-id", strategy = GenerationType.IDENTITY)
+    @GenericGenerator(name = "custom-id", strategy = "Tip.Connect.security.IdGenerator")
+    private String id;
 
     @Column(nullable = false)
     private String token;

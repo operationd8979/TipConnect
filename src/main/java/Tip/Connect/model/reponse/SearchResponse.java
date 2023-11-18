@@ -6,7 +6,7 @@ import lombok.NonNull;
 
 import java.util.List;
 
-public class SearchResponse extends HttpReponse{
+public class SearchResponse extends HttpResponse{
 
     @JsonProperty("user_aim")
     private TinyUser userAim;

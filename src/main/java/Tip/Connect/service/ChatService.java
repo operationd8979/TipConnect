@@ -1,9 +1,9 @@
 package Tip.Connect.service;
 
 import Tip.Connect.model.Auth.AppUser;
-import Tip.Connect.model.Chat.MessageChat;
 import Tip.Connect.model.Chat.Message;
 import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

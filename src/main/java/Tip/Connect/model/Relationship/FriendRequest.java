@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.util.Date;
 
@@ -17,8 +18,9 @@ import java.util.Date;
 public class FriendRequest {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long requestID;
+    @GeneratedValue(generator = "custom-id", strategy = GenerationType.IDENTITY)
+    @GenericGenerator(name = "custom-id", strategy = "Tip.Connect.security.IdGenerator")
+    private String requestID;
 
     private long timeStamp;
 

@@ -23,26 +23,34 @@ public class DataRetrieveUtil {
         return tinyUser;
     }
 
-    public List<FriendShipRespone> TranslateFriendShipToTiny(List<FriendShip> listFriend){
+    public FriendShipRespone TranslateFriendShipToTiny(FriendShip friendShip){
+        AppUser user = friendShip.getFriendShipId().getFriend();
+        TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
+        tinyUser.setState(StateAimUser.FRIEND);
+        FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId().toString(),tinyUser,friendShip.getType());
+        return friendShipRespone;
+    }
+
+    public List<FriendShipRespone> TranslateFriendShipToResponse(List<FriendShip> listFriend){
         List<FriendShipRespone> listFriendResponse = new ArrayList<>();
         for(FriendShip friendShip: listFriend){
-            AppUser user = friendShip.getFriend();
-            TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
-            tinyUser.setState(StateAimUser.FRIEND);
-            FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId(),tinyUser,friendShip.getType());
-            listFriendResponse.add(friendShipRespone);
+            listFriendResponse.add(TranslateFriendShipToTiny(friendShip));
         }
         return listFriendResponse;
+    }
+
+    public FriendRResponse TranslateFriendRequestToTiny(FriendRequest friendRequest){
+        AppUser user = friendRequest.getSender();
+        TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
+        tinyUser.setState(StateAimUser.ONWAIT);
+        FriendRResponse friendRResponse = new FriendRResponse(friendRequest.getRequestID(),tinyUser,friendRequest.getTimeStamp());
+        return friendRResponse;
     }
 
     public List<FriendRResponse> TranslateFriendRequestToResponse(List<FriendRequest> friendRequests){
         List<FriendRResponse> listFRResponse = new ArrayList<>();
         for(FriendRequest friendRequest: friendRequests){
-            AppUser user = friendRequest.getSender();
-            TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
-            tinyUser.setState(StateAimUser.ONWAIT);
-            FriendRResponse friendRResponse = new FriendRResponse(friendRequest.getRequestID(),tinyUser,friendRequest.getTimeStamp());
-            listFRResponse.add(friendRResponse);
+            listFRResponse.add(TranslateFriendRequestToTiny(friendRequest));
         }
         return listFRResponse;
     }

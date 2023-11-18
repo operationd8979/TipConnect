@@ -3,6 +3,7 @@ package Tip.Connect.service;
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
+import Tip.Connect.model.Chat.WsRecord.NotificationChat;
 import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
 import Tip.Connect.model.Chat.Record;
@@ -11,6 +12,7 @@ import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.repository.AppUserRepository;
 import Tip.Connect.repository.FriendRequestRepository;
+import Tip.Connect.repository.FriendShipRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import Tip.Connect.validator.PhoneValidator;
@@ -21,6 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -40,12 +43,14 @@ import java.util.stream.Stream;
 public class AppUserService implements UserDetailsService {
 
     private final AppUserRepository appUserRepository;
+    private final FriendShipRepository friendShipRepository;
     private final FriendRequestRepository friendRequestRepository;
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
     private final JwtService jwtService;
 
+    private final SimpMessagingTemplate simpMessagingTemplate;
     private final DataRetrieveUtil dataRetrieveUtil;
 
     private final EmailValidator emailValidator;
@@ -61,7 +66,7 @@ public class AppUserService implements UserDetailsService {
                 if(aimUser.getUserID().equals(userID)){
                     aimUser.setState(StateAimUser.SELF);
                 }
-                if(user.getListFrienst().stream().anyMatch(f->f.getFriend().getEmail().equals(query))){
+                if(user.getListFrienst().stream().anyMatch(f->f.getFriendShipId().getFriend().getEmail().equals(query))){
                     aimUser.setState(StateAimUser.FRIEND);
                 }
                 if(user.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(query))){
@@ -81,7 +86,7 @@ public class AppUserService implements UserDetailsService {
         return recordList;
     }
 
-    public HttpReponse getUserInfo(String userID){
+    public HttpResponse getUserInfo(String userID){
         var userDetails = appUserRepository.findById(userID).orElse(null);
         if(userDetails == null){
             return null;
@@ -94,7 +99,7 @@ public class AppUserService implements UserDetailsService {
                 .build();
     }
 
-    public HttpReponse updateUserInfo(HttpServletRequest request, UpdateRequest updateRequest){
+    public HttpResponse updateUserInfo(HttpServletRequest request, UpdateRequest updateRequest){
         var user = getUserByHttpRequest(request);
         if(user==null){
             return new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build();
@@ -112,7 +117,7 @@ public class AppUserService implements UserDetailsService {
         return new AuthenticationReponse.builder().code(200).tinyUser(tinyUser).build();
     }
 
-    public HttpReponse updateAvatar(HttpServletRequest request, String urlAvatar){
+    public HttpResponse updateAvatar(HttpServletRequest request, String urlAvatar){
         var user = getUserByHttpRequest(request);
         if(user==null){
             return new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build();
@@ -130,7 +135,7 @@ public class AppUserService implements UserDetailsService {
         }
         StreamingResponseBody stream = outputStream -> {
             List<FriendShip> listRaw = userDetails.getListFrienst();
-            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToTiny(listRaw);
+            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToResponse(listRaw);
 
 //            String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
 //            for(int i = 0;i<102;i++){
@@ -187,7 +192,7 @@ public class AppUserService implements UserDetailsService {
             return null;
         }
         StreamingResponseBody stream = outputStream -> {
-            List<FriendRequest> listRaw = friendRequestRepository.findAll().stream().filter(r->r.getReceiver()==userDetails).toList();
+            List<FriendRequest> listRaw = friendRequestRepository.findAll().stream().filter(r->r.getReceiver()==userDetails&&!r.isEnable()).toList();
             List<FriendRResponse> listFRResponse = dataRetrieveUtil.TranslateFriendRequestToResponse(listRaw);
 
             ObjectMapper objectMapper = new ObjectMapper();
@@ -218,14 +223,49 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
-    public void addFriend(String userID,String friendID){
+    public HttpResponse addFriend(String userID,String friendID){
         AppUser user = appUserRepository.findById(userID).orElse(null);
         AppUser friend = appUserRepository.findById(friendID).orElse(null);
         if(user==null||friend==null){
-            return;
+            return new MessageResponse(ErrorMessages.INVALID_PARAMS.getCode(), ErrorMessages.INVALID_PARAMS.getMessage());
         }
-        FriendRequest request = new FriendRequest(user,friend);
+        FriendRequest request = friendRequestRepository.findAll().stream().filter(r->r.getSender().getId().equals(user.getId())&&r.getReceiver().getId().equals(friend.getId())).findFirst().orElse(null);
+        if(request!=null){
+            return new MessageResponse(ErrorMessages.CONFLICT_UNIT.getCode(), ErrorMessages.CONFLICT_UNIT.getMessage());
+        }
+        request = new FriendRequest(user,friend);
         friendRequestRepository.save(request);
+
+        FriendRResponse friendRResponse = dataRetrieveUtil.TranslateFriendRequestToTiny(request);
+        simpMessagingTemplate.convertAndSendToUser(friendID,"/private",new NotificationChat(friendRResponse));
+
+        return new MessageResponse(200,"OK");
+    }
+
+    @Transactional()
+    public HttpResponse acceptFriendRequest(String userID,String requestID){
+        FriendRequest friendRequest = friendRequestRepository.findByRequestID(requestID).orElse(null);
+        if(friendRequest==null){
+            return new MessageResponse(ErrorMessages.NOT_FOUND.getCode(), ErrorMessages.NOT_FOUND.getMessage());
+        }
+        if(friendRequest.isEnable()){
+            return new MessageResponse(ErrorMessages.CONFLICT_UNIT.getCode(), ErrorMessages.CONFLICT_UNIT.getMessage());
+        }
+        AppUser user1 = friendRequest.getSender();
+        AppUser user2 = friendRequest.getReceiver();
+        friendRequest.setEnable(true);
+        friendRequestRepository.save(friendRequest);
+        FriendShip friendShip1 = new FriendShip(user1,user2,friendRequest);
+        friendShipRepository.save(friendShip1);
+        FriendShip friendShip2 = new FriendShip(user2,user1,friendRequest);
+        friendShipRepository.save(friendShip2);
+
+        FriendShipRespone friendShipRespone1 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip1);
+        simpMessagingTemplate.convertAndSendToUser(user1.getId(),"/private",new NotificationChat(friendShipRespone1));
+        FriendShipRespone friendShipRespone2 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip2);
+        simpMessagingTemplate.convertAndSendToUser(user2.getId(),"/private",new NotificationChat(friendShipRespone2));
+
+        return new MessageResponse(200,"OK");
     }
 
     @Transactional()
@@ -252,7 +292,7 @@ public class AppUserService implements UserDetailsService {
         }
     }
 
-    public HttpReponse login(LoginRequest request, HttpServletResponse reponse) {
+    public HttpResponse login(LoginRequest request, HttpServletResponse reponse) {
         try{
             var userDetails = appUserRepository.findByEmail(request.email()).orElseThrow(()->new IllegalStateException("User not found!"));
             TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);

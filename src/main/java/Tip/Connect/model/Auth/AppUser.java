@@ -33,7 +33,8 @@ public class AppUser implements UserDetails {
     private boolean looked = false;
     private boolean enabled = false;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "friendShipId.user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FriendShip> listFrienst;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)

@@ -3,7 +3,7 @@ package Tip.Connect.controller;
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.reponse.AuthenticationReponse;
 import Tip.Connect.model.reponse.ErrorReponse;
-import Tip.Connect.model.reponse.HttpReponse;
+import Tip.Connect.model.reponse.HttpResponse;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.service.AppUserService;
 import Tip.Connect.service.FireBaseService;
@@ -31,7 +31,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<HttpReponse> login(@RequestBody LoginRequest request, HttpServletResponse reponse){
+    public ResponseEntity<HttpResponse> login(@RequestBody LoginRequest request, HttpServletResponse reponse){
         int code = 200;
         String errorMessage = "";
         System.out.println("Some one log: " + request.email() + " " + request.password());
