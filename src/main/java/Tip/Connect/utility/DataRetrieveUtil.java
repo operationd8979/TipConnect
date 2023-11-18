@@ -1,7 +1,9 @@
 package Tip.Connect.utility;
 
 import Tip.Connect.model.Auth.AppUser;
+import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
+import Tip.Connect.model.reponse.FriendRResponse;
 import Tip.Connect.model.reponse.StateAimUser;
 import Tip.Connect.model.reponse.FriendShipRespone;
 import Tip.Connect.model.reponse.TinyUser;
@@ -31,6 +33,18 @@ public class DataRetrieveUtil {
             listFriendResponse.add(friendShipRespone);
         }
         return listFriendResponse;
+    }
+
+    public List<FriendRResponse> TranslateFriendRequestToResponse(List<FriendRequest> friendRequests){
+        List<FriendRResponse> listFRResponse = new ArrayList<>();
+        for(FriendRequest friendRequest: friendRequests){
+            AppUser user = friendRequest.getSender();
+            TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
+            tinyUser.setState(StateAimUser.ONWAIT);
+            FriendRResponse friendRResponse = new FriendRResponse(friendRequest.getRequestID(),tinyUser,friendRequest.getTimeStamp());
+            listFRResponse.add(friendRResponse);
+        }
+        return listFRResponse;
     }
 
 

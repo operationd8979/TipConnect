@@ -53,18 +53,21 @@ public class AppUserService implements UserDetailsService {
 
 
     public TinyUser searchAimUser(String userID,String query){
-        var userDetails = appUserRepository.findById(userID).orElse(null);
-        if(emailValidator.test(query)||userDetails==null){
-            AppUser user = loadUserByUsername(query);
-            if(user!=null){
-                TinyUser aimUser = dataRetrieveUtil.TranslateAppUserToTiny(user);
+        var user = appUserRepository.findById(userID).orElse(null);
+        if(emailValidator.test(query)||user==null){
+            AppUser queryUser = loadUserByUsername(query);
+            if(queryUser!=null){
+                TinyUser aimUser = dataRetrieveUtil.TranslateAppUserToTiny(queryUser);
                 if(aimUser.getUserID().equals(userID)){
                     aimUser.setState(StateAimUser.SELF);
                 }
                 if(user.getListFrienst().stream().anyMatch(f->f.getFriend().getEmail().equals(query))){
                     aimUser.setState(StateAimUser.FRIEND);
                 }
-                if(friendRequestRepository.findByReceiver(user).isPresent()){
+                if(user.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(query))){
+                    aimUser.setState(StateAimUser.ONSEND);
+                }
+                if(queryUser.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(user.getEmail()))){
                     aimUser.setState(StateAimUser.ONWAIT);
                 }
                 return aimUser;
@@ -185,33 +188,26 @@ public class AppUserService implements UserDetailsService {
         }
         StreamingResponseBody stream = outputStream -> {
             List<FriendRequest> listRaw = friendRequestRepository.findAll().stream().filter(r->r.getReceiver()==userDetails).toList();
-            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToTiny(listRaw);
+            List<FriendRResponse> listFRResponse = dataRetrieveUtil.TranslateFriendRequestToResponse(listRaw);
 
             ObjectMapper objectMapper = new ObjectMapper();
-            Stream<FriendShipRespone> streamFriend = listFriend.stream();
+            Stream<FriendRResponse> streamFRequest = listFRResponse.stream();
             JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
 
-            if(streamFriend!=null){
+            if(streamFRequest!=null){
                 try{
-                    int i = 0;
-                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
+                    Iterator<FriendRResponse> friendRResponseIterator = streamFRequest.iterator();
                     jsonGenerator.writeStartArray();
-                    while(friendShipIterator.hasNext()) {
-                        FriendShipRespone friendShipRespone = friendShipIterator.next();
-                        jsonGenerator.writeObject(friendShipRespone);
-                        i++;
-                        if(i==10){
-                            i = 0;
-                            jsonGenerator.writeEndArray();
-                            jsonGenerator.writeStartArray();
-                        }
+                    while(friendRResponseIterator.hasNext()) {
+                        FriendRResponse friendRResponse = friendRResponseIterator.next();
+                        jsonGenerator.writeObject(friendRResponse);
                     }
                     jsonGenerator.writeEndArray();
                 }catch (Exception ex){
                     ex.printStackTrace();
                 }finally {
-                    if(streamFriend != null) {
-                        streamFriend.close();
+                    if(streamFRequest != null) {
+                        streamFRequest.close();
                     }
                     if(jsonGenerator != null)  {
                         jsonGenerator.close();

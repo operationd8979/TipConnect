@@ -15,9 +15,9 @@ public class FriendRResponse {
 
     @JsonProperty("id")
     private long id;
-    @JsonProperty("friend")
-    private TinyUser friend;
-    @JsonProperty("type")
-    private TypeFriendShip type;
+    @JsonProperty("sender")
+    private TinyUser sender;
+    @JsonProperty("time_stamp")
+    private long timeStamp;
 
 }
