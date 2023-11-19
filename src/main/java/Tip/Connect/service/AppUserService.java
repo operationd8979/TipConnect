@@ -66,14 +66,14 @@ public class AppUserService implements UserDetailsService {
                 if(aimUser.getUserID().equals(userID)){
                     aimUser.setState(StateAimUser.SELF);
                 }
-                if(user.getListFrienst().stream().anyMatch(f->f.getFriendShipId().getFriend().getEmail().equals(query))){
-                    aimUser.setState(StateAimUser.FRIEND);
-                }
                 if(user.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(query))){
                     aimUser.setState(StateAimUser.ONSEND);
                 }
                 if(queryUser.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(user.getEmail()))){
                     aimUser.setState(StateAimUser.ONWAIT);
+                }
+                if(user.getListFrienst().stream().anyMatch(f->f.getFriendShipId().getFriend().getEmail().equals(query))){
+                    aimUser.setState(StateAimUser.FRIEND);
                 }
                 return aimUser;
             }
@@ -237,7 +237,28 @@ public class AppUserService implements UserDetailsService {
         friendRequestRepository.save(request);
 
         FriendRResponse friendRResponse = dataRetrieveUtil.TranslateFriendRequestToTiny(request);
-        simpMessagingTemplate.convertAndSendToUser(friendID,"/private",new NotificationChat(friendRResponse));
+        simpMessagingTemplate.convertAndSendToUser(friendID,"/private",new NotificationChat(friendRResponse,101));
+
+        return new MessageResponse(200,"OK");
+    }
+
+    public HttpResponse cancelFriendRequest(String userID,String friendID){
+        AppUser user = appUserRepository.findById(userID).orElse(null);
+        AppUser friend = appUserRepository.findById(friendID).orElse(null);
+        if(user==null||friend==null){
+            return new MessageResponse(ErrorMessages.INVALID_PARAMS.getCode(), ErrorMessages.INVALID_PARAMS.getMessage());
+        }
+        FriendRequest request = friendRequestRepository.findAll().stream().filter(r->r.getSender().getId().equals(user.getId())&&r.getReceiver().getId().equals(friend.getId())).findFirst().orElse(null);
+        if(request==null){
+            return new MessageResponse(ErrorMessages.NOT_FOUND.getCode(), ErrorMessages.NOT_FOUND.getMessage());
+        }
+        if(request.isEnable()){
+            return new MessageResponse(ErrorMessages.CONFLICT_UNIT.getCode(), ErrorMessages.CONFLICT_UNIT.getMessage());
+        }
+        friendRequestRepository.delete(request);
+
+        FriendRResponse friendRResponse = dataRetrieveUtil.TranslateFriendRequestToTiny(request);
+        simpMessagingTemplate.convertAndSendToUser(friendID,"/private",new NotificationChat(friendRResponse,102));
 
         return new MessageResponse(200,"OK");
     }
@@ -261,10 +282,23 @@ public class AppUserService implements UserDetailsService {
         friendShipRepository.save(friendShip2);
 
         FriendShipRespone friendShipRespone1 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip1);
-        simpMessagingTemplate.convertAndSendToUser(user1.getId(),"/private",new NotificationChat(friendShipRespone1));
+        simpMessagingTemplate.convertAndSendToUser(user1.getId(),"/private",new NotificationChat(friendShipRespone1,101));
         FriendShipRespone friendShipRespone2 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip2);
-        simpMessagingTemplate.convertAndSendToUser(user2.getId(),"/private",new NotificationChat(friendShipRespone2));
+        simpMessagingTemplate.convertAndSendToUser(user2.getId(),"/private",new NotificationChat(friendShipRespone2,101));
 
+        return new MessageResponse(200,"OK");
+    }
+
+    @Transactional()
+    public HttpResponse denyFriendRequest(String userID,String requestID){
+        FriendRequest friendRequest = friendRequestRepository.findByRequestID(requestID).orElse(null);
+        if(friendRequest==null){
+            return new MessageResponse(ErrorMessages.NOT_FOUND.getCode(), ErrorMessages.NOT_FOUND.getMessage());
+        }
+        if(friendRequest.isEnable()){
+            return new MessageResponse(ErrorMessages.CONFLICT_UNIT.getCode(), ErrorMessages.CONFLICT_UNIT.getMessage());
+        }
+        friendRequestRepository.delete(friendRequest);
         return new MessageResponse(200,"OK");
     }
 

@@ -19,18 +19,23 @@ public class NotificationChat extends RawChat {
     @JsonProperty("friendShipRespone")
     private FriendShipRespone friendShipRespone;
 
-    public NotificationChat(FriendRResponse friendRResponse){
+    @JsonProperty("actionCode")
+    private int actionCode = 0;
+
+    public NotificationChat(FriendRResponse friendRResponse, int actionCode){
         this.type = RecordType.SYSTEM;
-        this.body = friendRResponse.getSender().getFullName()+" gửi lời mời kết bạn";
+        this.body = friendRResponse.getSender().toString();
         this.timestamp = new Date().getTime();
         this.friendRResponse = friendRResponse;
+        this.actionCode = actionCode;
     }
 
-    public NotificationChat(FriendShipRespone friendShipRespone){
+    public NotificationChat(FriendShipRespone friendShipRespone, int actionCode){
         this.type = RecordType.SYSTEM;
-        this.body = friendShipRespone.getFriend()+" đã thêm vào danh sách bạn bè";
+        this.body = friendShipRespone.getFriend().toString();
         this.timestamp = new Date().getTime();
         this.friendShipRespone = friendShipRespone;
+        this.actionCode = actionCode;
     }
 
 

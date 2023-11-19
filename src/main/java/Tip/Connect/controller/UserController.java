@@ -69,15 +69,6 @@ public class UserController {
         return ResponseEntity.ok(new SearchResponse.builder().code(200).tinyUser(aimUser).listMessage(messages).build());
     }
 
-    @GetMapping(value = "/add/{friendID}")
-    public ResponseEntity<HttpResponse> addFriend(HttpServletRequest request,@PathVariable("friendID") String friendID){
-        String userID = appUserService.getUserIdByHttpRequest(request);
-        if(userID==null){
-            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
-        }
-        return ResponseEntity.ok(appUserService.addFriend(userID,friendID));
-    }
-
     @GetMapping(value = "/getFriendRequests")
     public ResponseEntity<StreamingResponseBody> getFriendRequest(HttpServletRequest request){
         String userID = appUserService.getUserIdByHttpRequest(request);
@@ -87,6 +78,24 @@ public class UserController {
         return ResponseEntity.ok(appUserService.getFriendRequests(userID));
     }
 
+    @GetMapping(value = "/add/{friendID}")
+    public ResponseEntity<HttpResponse> addFriend(HttpServletRequest request,@PathVariable("friendID") String friendID){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
+        }
+        return ResponseEntity.ok(appUserService.addFriend(userID,friendID));
+    }
+
+    @GetMapping(value = "/cancel/{friendID}")
+    public ResponseEntity<HttpResponse> cancelFriendRequest(HttpServletRequest request,@PathVariable("friendID") String friendID){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
+        }
+        return ResponseEntity.ok(appUserService.cancelFriendRequest(userID,friendID));
+    }
+
     @GetMapping(value = "/acceptFriendRequest/{requestID}")
     public ResponseEntity<HttpResponse> acceptFriendRequest(HttpServletRequest request,@PathVariable("requestID") String requestID){
         String userID = appUserService.getUserIdByHttpRequest(request);
@@ -94,6 +103,15 @@ public class UserController {
             return ResponseEntity.ok(null);
         }
         return ResponseEntity.ok(appUserService.acceptFriendRequest(userID,requestID));
+    }
+
+    @GetMapping(value = "/denyFriendRequest/{requestID}")
+    public ResponseEntity<HttpResponse> denyFriendRequest(HttpServletRequest request,@PathVariable("requestID") String requestID){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(null);
+        }
+        return ResponseEntity.ok(appUserService.denyFriendRequest(userID,requestID));
     }
 
 
