@@ -1,12 +1,14 @@
 package Tip.Connect.utility;
 
 import Tip.Connect.model.Auth.AppUser;
+import Tip.Connect.model.Chat.Record;
 import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
 import Tip.Connect.model.reponse.FriendRResponse;
 import Tip.Connect.model.reponse.StateAimUser;
 import Tip.Connect.model.reponse.FriendShipRespone;
 import Tip.Connect.model.reponse.TinyUser;
+import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,18 +25,19 @@ public class DataRetrieveUtil {
         return tinyUser;
     }
 
-    public FriendShipRespone TranslateFriendShipToTiny(FriendShip friendShip){
+    public FriendShipRespone TranslateFriendShipToTiny(FriendShip friendShip,Record message){
         AppUser user = friendShip.getFriendShipId().getFriend();
         TinyUser tinyUser = new TinyUser(user.getId(),user.getFirstName(),user.getLastName(),user.getFullName(),user.getUrlAvatar());
         tinyUser.setState(StateAimUser.FRIEND);
-        FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId().toString(),tinyUser,friendShip.getType());
+        FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId().toString(),tinyUser,friendShip.getType(),message);
         return friendShipRespone;
     }
 
-    public List<FriendShipRespone> TranslateFriendShipToResponse(List<FriendShip> listFriend){
+    public List<FriendShipRespone> TranslateFriendShipToResponse(List<FriendShip> listFriend,AppUser user){
         List<FriendShipRespone> listFriendResponse = new ArrayList<>();
         for(FriendShip friendShip: listFriend){
-            listFriendResponse.add(TranslateFriendShipToTiny(friendShip));
+            Record message = Iterables.getLast(() -> user.getNewChats().stream().filter(c->c.getSender().getId().equals(friendShip.getFriendShipId().getFriend().getId())).iterator());
+            listFriendResponse.add(TranslateFriendShipToTiny(friendShip,message));
         }
         return listFriendResponse;
     }

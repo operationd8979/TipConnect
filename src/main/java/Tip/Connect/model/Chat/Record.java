@@ -17,17 +17,17 @@ public class Record {
     @GenericGenerator(name = "custom-id", strategy = "Tip.Connect.security.RecordIdGenerator")
     private String recordID;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             nullable = false,
-            name = "sender"
+            name = "sender_id"
     )
     private AppUser sender;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             nullable = false,
-            name = "receiver"
+            name = "receiver_id"
     )
     private AppUser receiver;
 

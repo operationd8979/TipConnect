@@ -1,5 +1,6 @@
 package Tip.Connect.model.reponse;
 
+import Tip.Connect.model.Chat.Record;
 import Tip.Connect.model.Relationship.TypeFriendShip;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -19,5 +20,7 @@ public class FriendShipRespone {
     private TinyUser friend;
     @JsonProperty("type")
     private TypeFriendShip type;
+    @JsonProperty("message")
+    private Record message;
 
 }

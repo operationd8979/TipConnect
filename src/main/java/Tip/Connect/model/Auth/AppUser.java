@@ -1,5 +1,6 @@
 package Tip.Connect.model.Auth;
 
+import Tip.Connect.model.Chat.Record;
 import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
 import jakarta.persistence.*;
@@ -39,6 +40,9 @@ public class AppUser implements UserDetails {
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
     private List<FriendRequest> friendRequests;
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL)
+    private List<Record> newChats;
 
 
     public AppUser(String firstName,

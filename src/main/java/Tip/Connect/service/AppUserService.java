@@ -135,7 +135,10 @@ public class AppUserService implements UserDetailsService {
         }
         StreamingResponseBody stream = outputStream -> {
             List<FriendShip> listRaw = userDetails.getListFrienst();
-            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToResponse(listRaw);
+            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToResponse(listRaw,userDetails);
+            for(FriendShipRespone respone: listFriend){
+                System.out.println(respone.getMessage());
+            }
 
 //            String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
 //            for(int i = 0;i<102;i++){
@@ -148,40 +151,40 @@ public class AppUserService implements UserDetailsService {
             Stream<FriendShipRespone> streamFriend = listFriend.stream();
             JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
 
-            if(streamFriend!=null){
-                try{
-                    int i = 0;
-                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
-                    jsonGenerator.writeStartArray();
-                    while(friendShipIterator.hasNext()) {
-                        FriendShipRespone friendShipRespone = friendShipIterator.next();
-                        jsonGenerator.writeObject(friendShipRespone);
-                        i++;
-                        if(i==10){
-                            i = 0;
-                            jsonGenerator.writeEndArray();
-                            jsonGenerator.writeStartArray();
-                        }
-
-//                            try{
-//                                Thread.sleep(300);
-//                            }catch (InterruptedException e){
-//                                e.printStackTrace();
-//                            }
-
-                    }
-                    jsonGenerator.writeEndArray();
-                }catch (Exception ex){
-                    ex.printStackTrace();
-                }finally {
-                    if(streamFriend != null) {
-                        streamFriend.close();
-                    }
-                    if(jsonGenerator != null)  {
-                        jsonGenerator.close();
-                    }
-                }
-            }
+//            if(streamFriend!=null){
+//                try{
+//                    int i = 0;
+//                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
+//                    jsonGenerator.writeStartArray();
+//                    while(friendShipIterator.hasNext()) {
+//                        FriendShipRespone friendShipRespone = friendShipIterator.next();
+//                        jsonGenerator.writeObject(friendShipRespone);
+//                        i++;
+//                        if(i==10){
+//                            i = 0;
+//                            jsonGenerator.writeEndArray();
+//                            jsonGenerator.writeStartArray();
+//                        }
+//
+////                            try{
+////                                Thread.sleep(300);
+////                            }catch (InterruptedException e){
+////                                e.printStackTrace();
+////                            }
+//
+//                    }
+//                    jsonGenerator.writeEndArray();
+//                }catch (Exception ex){
+//                    ex.printStackTrace();
+//                }finally {
+//                    if(streamFriend != null) {
+//                        streamFriend.close();
+//                    }
+//                    if(jsonGenerator != null)  {
+//                        jsonGenerator.close();
+//                    }
+//                }
+//            }
         };
         return stream;
     }
@@ -281,9 +284,9 @@ public class AppUserService implements UserDetailsService {
         FriendShip friendShip2 = new FriendShip(user2,user1,friendRequest);
         friendShipRepository.save(friendShip2);
 
-        FriendShipRespone friendShipRespone1 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip1);
+        FriendShipRespone friendShipRespone1 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip1,null);
         simpMessagingTemplate.convertAndSendToUser(user1.getId(),"/private",new NotificationChat(friendShipRespone1,101));
-        FriendShipRespone friendShipRespone2 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip2);
+        FriendShipRespone friendShipRespone2 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip2,null);
         simpMessagingTemplate.convertAndSendToUser(user2.getId(),"/private",new NotificationChat(friendShipRespone2,101));
 
         return new MessageResponse(200,"OK");
