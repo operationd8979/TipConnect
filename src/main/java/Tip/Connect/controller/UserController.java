@@ -114,5 +114,14 @@ public class UserController {
         return ResponseEntity.ok(appUserService.denyFriendRequest(userID,requestID));
     }
 
+    @GetMapping(value = "/getMessages/{friendID}")
+    public ResponseEntity<StreamingResponseBody> getMessages(HttpServletRequest request,@PathVariable("friendID") String friendID){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(null);
+        }
+        return ResponseEntity.ok(appUserService.getMessages(userID,friendID));
+    }
+
 
 }

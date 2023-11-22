@@ -41,8 +41,10 @@ public class AppUser implements UserDetails {
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
     private List<FriendRequest> friendRequests;
 
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+    private List<Record> listMyChat;
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL)
-    private List<Record> newChats;
+    private List<Record> listChat;
 
 
     public AppUser(String firstName,

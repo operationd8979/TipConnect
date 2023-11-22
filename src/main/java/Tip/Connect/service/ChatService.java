@@ -29,6 +29,7 @@ public class ChatService {
             Record message = new Message(sender,receiver,new Date().getTime(),chat.getType(),chat.getBody());
             chatRepository.save(message);
             chat.setTimestamp(message.getTimestamp());
+            chat.setUser(false);
             return chat;
         }catch (Exception ex){
             ex.printStackTrace();

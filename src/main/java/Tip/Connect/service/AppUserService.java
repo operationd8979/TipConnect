@@ -4,6 +4,7 @@ import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.model.Chat.WsRecord.NotificationChat;
+import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
 import Tip.Connect.model.Chat.Record;
@@ -32,10 +33,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -136,9 +135,6 @@ public class AppUserService implements UserDetailsService {
         StreamingResponseBody stream = outputStream -> {
             List<FriendShip> listRaw = userDetails.getListFrienst();
             List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToResponse(listRaw,userDetails);
-            for(FriendShipRespone respone: listFriend){
-                System.out.println(respone.getMessage());
-            }
 
 //            String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
 //            for(int i = 0;i<102;i++){
@@ -151,40 +147,41 @@ public class AppUserService implements UserDetailsService {
             Stream<FriendShipRespone> streamFriend = listFriend.stream();
             JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
 
-//            if(streamFriend!=null){
-//                try{
-//                    int i = 0;
-//                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
-//                    jsonGenerator.writeStartArray();
-//                    while(friendShipIterator.hasNext()) {
-//                        FriendShipRespone friendShipRespone = friendShipIterator.next();
-//                        jsonGenerator.writeObject(friendShipRespone);
-//                        i++;
-//                        if(i==10){
-//                            i = 0;
-//                            jsonGenerator.writeEndArray();
-//                            jsonGenerator.writeStartArray();
-//                        }
-//
-////                            try{
-////                                Thread.sleep(300);
-////                            }catch (InterruptedException e){
-////                                e.printStackTrace();
-////                            }
-//
-//                    }
-//                    jsonGenerator.writeEndArray();
-//                }catch (Exception ex){
-//                    ex.printStackTrace();
-//                }finally {
-//                    if(streamFriend != null) {
-//                        streamFriend.close();
-//                    }
-//                    if(jsonGenerator != null)  {
-//                        jsonGenerator.close();
-//                    }
-//                }
-//            }
+            if(streamFriend!=null){
+                try{
+                    int i = 0;
+                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(friendShipIterator.hasNext()) {
+                        FriendShipRespone friendShipRespone = friendShipIterator.next();
+                        jsonGenerator.writeObject(friendShipRespone);
+                        i++;
+                        if(i==10){
+                            i = 0;
+                            jsonGenerator.writeEndArray();
+                            jsonGenerator.writeStartArray();
+                        }
+
+//                            try{
+//                                Thread.sleep(300);
+//                            }catch (InterruptedException e){
+//                                e.printStackTrace();
+//                            }
+
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(streamFriend != null) {
+                        streamFriend.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+
         };
         return stream;
     }
@@ -216,6 +213,47 @@ public class AppUserService implements UserDetailsService {
                 }finally {
                     if(streamFRequest != null) {
                         streamFRequest.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return stream;
+    }
+
+    public StreamingResponseBody getMessages(String userID,String friendID) {
+        AppUser user = appUserRepository.findById(userID).orElse(null);
+        AppUser friend = appUserRepository.findById(friendID).orElse(null);
+        if(user == null|| friend==null){
+            return null;
+        }
+        StreamingResponseBody stream = outputStream -> {
+            List<Record> listMyChat = user.getListMyChat().stream().filter(c->c.getReceiver().getId().equals(friendID)).collect(Collectors.toList());
+            List<Record> listChat = user.getListChat().stream().filter(c->c.getSender().getId().equals(friendID)).collect(Collectors.toList());
+            listMyChat.addAll(listChat);
+            listMyChat.sort(Comparator.comparingLong(Record::getTimestamp));
+            List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listMyChat,userID);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<RawChat> rawChatStream = listChatResponse.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+
+            if(rawChatStream!=null){
+                try{
+                    Iterator<RawChat> rawChatIterator = rawChatStream.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(rawChatIterator.hasNext()) {
+                        RawChat rawChat = rawChatIterator.next();
+                        jsonGenerator.writeObject(rawChat);
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(rawChatStream != null) {
+                        rawChatStream.close();
                     }
                     if(jsonGenerator != null)  {
                         jsonGenerator.close();

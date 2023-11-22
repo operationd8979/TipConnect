@@ -22,18 +22,15 @@ public class NotificationChat extends RawChat {
     @JsonProperty("actionCode")
     private int actionCode = 0;
 
+
     public NotificationChat(FriendRResponse friendRResponse, int actionCode){
-        this.type = RecordType.SYSTEM;
-        this.body = friendRResponse.getSender().toString();
-        this.timestamp = new Date().getTime();
+        super(RecordType.SYSTEM,friendRResponse.getSender().toString(),new Date().getTime(),false);
         this.friendRResponse = friendRResponse;
         this.actionCode = actionCode;
     }
 
     public NotificationChat(FriendShipRespone friendShipRespone, int actionCode){
-        this.type = RecordType.SYSTEM;
-        this.body = friendShipRespone.getFriend().toString();
-        this.timestamp = new Date().getTime();
+        super(RecordType.SYSTEM,friendShipRespone.getFriend().toString(),new Date().getTime(),false);
         this.friendShipRespone = friendShipRespone;
         this.actionCode = actionCode;
     }
