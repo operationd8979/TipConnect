@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.Synchronized;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -34,6 +35,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,6 +57,7 @@ public class AppUserService implements UserDetailsService {
 
     private final EmailValidator emailValidator;
     private final PhoneValidator phoneValidator;
+
 
 
     public TinyUser searchAimUser(String userID,String query){
@@ -233,7 +237,7 @@ public class AppUserService implements UserDetailsService {
             List<Record> listMyChat = user.getListMyChat().stream().filter(c->c.getReceiver().getId().equals(friendID)).collect(Collectors.toList());
             List<Record> listChat = user.getListChat().stream().filter(c->c.getSender().getId().equals(friendID)).collect(Collectors.toList());
             listMyChat.addAll(listChat);
-            listMyChat.sort(Comparator.comparingLong(Record::getTimestamp));
+            listMyChat.sort(Comparator.comparingLong(Record::getTimeStamp));
             List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listMyChat,userID);
 
             ObjectMapper objectMapper = new ObjectMapper();
@@ -344,7 +348,9 @@ public class AppUserService implements UserDetailsService {
     }
 
     @Transactional()
-    public String signUp(AppUser appUser) {
+    public synchronized String signUp(AppUser appUser) {
+        System.out.println("[tiến hành đăng ký]");
+        System.out.println("[tồn tại user]:"+appUserRepository.findByEmail(appUser.getEmail()).isPresent());
         try{
             boolean userExists = appUserRepository.findByEmail(appUser.getEmail()).isPresent();
             if(userExists){
@@ -364,6 +370,8 @@ public class AppUserService implements UserDetailsService {
             return token;
         }catch (Exception ex){
             return null;
+        }finally {
+            System.out.println("[hoàn tất đăng ký]");
         }
     }
 

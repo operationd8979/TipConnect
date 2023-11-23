@@ -39,11 +39,14 @@ public class AppUser implements UserDetails {
     private List<FriendShip> listFrienst;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+    @OrderBy("time_stamp ASC")
     private List<FriendRequest> friendRequests;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+    @OrderBy("time_stamp ASC")
     private List<Record> listMyChat;
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL)
+    @OrderBy("time_stamp ASC")
     private List<Record> listChat;
 
 

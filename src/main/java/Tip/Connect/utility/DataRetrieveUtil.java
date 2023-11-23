@@ -35,7 +35,12 @@ public class DataRetrieveUtil {
         tinyUser.setState(StateAimUser.FRIEND);
         RawChat chat = null;
         if(message!=null){
-            chat = TranslateRecordToTiny(message,false);
+//            System.out.println("[người gửi]: " + message.getSender().getFullName());
+//            System.out.println("[người nhận]: " + message.getReceiver().getFullName());
+//            System.out.println("[friendShip[user]]: " + friendShip.getFriendShipId().getUser().getFullName());
+//            System.out.println("[friendShip[friend]]: " + friendShip.getFriendShipId().getFriend().getFullName());
+//            System.out.println("[isUser]:" + message.getSender().getId().equals(friendShip.getFriendShipId().getUser().getId()));
+            chat = TranslateRecordToTiny(message,message.getSender().getId().equals(friendShip.getFriendShipId().getUser().getId()));
         }
         FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId().toString(),tinyUser,friendShip.getType(),chat);
         return friendShipRespone;
@@ -45,10 +50,23 @@ public class DataRetrieveUtil {
         List<FriendShipRespone> listFriendResponse = new ArrayList<>();
         for(FriendShip friendShip: listFriend){
             Record message = null;
+            Record messageFriend = null;
+            Record messageUser = null;
+
             try{
-                message = Iterables.getLast(() -> user.getListChat().stream().filter(c->c.getSender().getId().equals(friendShip.getFriendShipId().getFriend().getId())).iterator());
-            }catch(NoSuchElementException ex){
+                messageFriend = Iterables.getLast(() -> user.getListChat().stream().filter(c->c.getSender().getId().equals(friendShip.getFriendShipId().getFriend().getId())).iterator());
+            }catch(NoSuchElementException ex){}
+            try{
+                messageUser = Iterables.getLast(() -> user.getListMyChat().stream().filter(c->c.getReceiver().getId().equals(friendShip.getFriendShipId().getFriend().getId())).iterator());
+            }catch(NoSuchElementException ex){}
+
+            if(messageFriend!=null&&messageUser!=null){
+                message = messageFriend.getTimeStamp()>messageUser.getTimeStamp()?messageFriend:messageUser;
             }
+            else{
+                message = messageUser!=null?messageUser:messageFriend!=null?messageFriend:null;
+            }
+
             listFriendResponse.add(TranslateFriendShipToTiny(friendShip,message));
         }
         return listFriendResponse;
@@ -73,9 +91,9 @@ public class DataRetrieveUtil {
     public RawChat TranslateRecordToTiny(Record record,boolean isUser){
         RawChat chat = null;
         if(record instanceof Message){
-            chat = new MessageChat(record.getType(),((Message) record).getContent(),record.getTimestamp(),record.isSeen(),record.getSender().getId(),record.getReceiver().getId(),isUser);
+            chat = new MessageChat(record.getType(),((Message) record).getContent(),record.getTimeStamp(),record.isSeen(),record.getSender().getId(),record.getReceiver().getId(),isUser);
         }else{
-            chat = new MessageChat(record.getType(),null,record.getTimestamp(),record.isSeen(),record.getSender().getId(),record.getReceiver().getId(),isUser);
+            chat = new MessageChat(record.getType(),null,record.getTimeStamp(),record.isSeen(),record.getSender().getId(),record.getReceiver().getId(),isUser);
         }
         return chat;
     }

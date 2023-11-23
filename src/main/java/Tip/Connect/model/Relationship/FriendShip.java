@@ -15,21 +15,9 @@ import org.hibernate.annotations.GenericGenerator;
 @Entity
 public class FriendShip {
 
-//    @Id
-//    @GeneratedValue(generator = "custom-id", strategy = GenerationType.IDENTITY)
-//    @GenericGenerator(name = "custom-id", strategy = "Tip.Connect.security.IdGenerator")
-//    private String friendShipId;
-
     @EmbeddedId
     private FriendShipId friendShipId;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id")
-//    private AppUser user;
-//
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "friend_id")
-//    private AppUser friend;
 
     @Enumerated(EnumType.STRING)
     private TypeFriendShip type;
@@ -38,8 +26,6 @@ public class FriendShip {
     private FriendRequest friendRequest;
 
     public FriendShip(AppUser user,AppUser friend,FriendRequest friendRequest){
-//        this.user = user;
-//        this.friend = friend;
         this.friendShipId = new FriendShipId(user, friend);
         this.friendRequest = friendRequest;
         this.type = TypeFriendShip.COMMON;

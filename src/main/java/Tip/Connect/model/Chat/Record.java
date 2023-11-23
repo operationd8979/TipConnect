@@ -11,6 +11,7 @@ import org.hibernate.annotations.GenericGenerator;
 @Setter
 @Getter
 @Entity
+@Table(name = "record", indexes = @Index(columnList = "timestamp"))
 public class Record {
     @Id
     @GeneratedValue(generator = "custom-id", strategy = GenerationType.IDENTITY)
@@ -31,19 +32,18 @@ public class Record {
     )
     private AppUser receiver;
 
-    private long timestamp;
+    private long timeStamp;
 
     private boolean seen = false;
 
     private RecordType type;
 
-    public Record(AppUser sender,AppUser receiver,long timestamp,RecordType type){
+    public Record(AppUser sender,AppUser receiver,long timeStamp,RecordType type){
         this.sender = sender;
         this.receiver = receiver;
-        this.timestamp = timestamp;
+        this.timeStamp = timeStamp;
         this.type = type;
     }
-
 
 
 }
