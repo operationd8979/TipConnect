@@ -37,5 +37,15 @@ public class ChatController {
         }
     }
 
+    @MessageMapping("/tradeRTC")
+    private void tradeRTC(@Payload MessageChat chat, Principal principal){
+        System.out.println("nhận tin nhắn private from: "+principal.getName() +" to: "+chat.getTo());
+        chat.setFrom(principal.getName());
+        MessageChat message = chatService.tradeRTC(chat);
+        if(message!=null){
+            simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",message);
+        }
+    }
+
 
 }

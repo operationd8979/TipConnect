@@ -1,6 +1,7 @@
 package Tip.Connect.model.Chat;
 
 import Tip.Connect.model.Auth.AppUser;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.*;
 
@@ -11,6 +12,8 @@ import lombok.*;
 @NoArgsConstructor
 public class Message extends Record {
 
+
+    @Column(length = 500)
     private String content;
 
     public Message(AppUser user, AppUser user2, long timeStamp, RecordType type, String content){

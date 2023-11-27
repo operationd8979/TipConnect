@@ -4,5 +4,6 @@ public enum RecordType {
     MESSAGE,
     PHOTO,
     CALL,
-    SYSTEM
+    SYSTEM,
+    RTC
 }

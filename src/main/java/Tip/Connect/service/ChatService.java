@@ -37,4 +37,23 @@ public class ChatService {
         }
     }
 
+    @Transactional
+    public MessageChat tradeRTC(MessageChat chat){
+        AppUser sender = appUserService.loadUserByUserid(chat.getFrom());
+        AppUser receiver = appUserService.loadUserByUserid(chat.getTo());
+        if(sender==null||receiver==null){
+            return null;
+        }
+        try{
+            chat.setTimestamp(new Date().getTime());
+            chat.setUser(false);
+            return chat;
+        }catch (Exception ex){
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+
+
 }
