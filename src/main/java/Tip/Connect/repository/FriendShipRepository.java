@@ -11,5 +11,7 @@ import java.util.Optional;
 @Repository
 @Transactional(readOnly = true)
 public interface FriendShipRepository extends JpaRepository<FriendShip, FriendShipId> {
-    Optional<FriendShip> findByFriendShipId(FriendShipId id);
+
+    @Override
+    Optional<FriendShip> findById(FriendShipId id);
 }

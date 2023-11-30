@@ -8,8 +8,8 @@ import Tip.Connect.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Date;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +30,7 @@ public class ChatService {
             chatRepository.save(message);
             chat.setTimestamp(message.getTimeStamp());
             chat.setUser(false);
+            chat.setSeen(false);
             return chat;
         }catch (Exception ex){
             ex.printStackTrace();
@@ -53,6 +54,9 @@ public class ChatService {
             return null;
         }
     }
+
+
+
 
 
 

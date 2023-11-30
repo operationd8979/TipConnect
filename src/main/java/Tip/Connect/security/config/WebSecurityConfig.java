@@ -28,7 +28,7 @@ public class WebSecurityConfig {
     private final JwtFilterService jwtFilterService;
 
     private static final String[] DOMAIN_FRIEND = {
-            "http://localhost:3000"
+            "http://localhost:3000",
     };
 
     private static final String[] WHITE_LIST_URL = {

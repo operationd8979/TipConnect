@@ -11,7 +11,9 @@ import java.util.Optional;
 @Repository
 @Transactional(readOnly = true)
 public interface FriendRequestRepository  extends JpaRepository<FriendRequest, String> {
-    Optional<FriendRequest> findByRequestID(String id);
+
+    @Override
+    Optional<FriendRequest> findById(String id);
 
 }
 

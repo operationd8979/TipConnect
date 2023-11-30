@@ -123,5 +123,10 @@ public class UserController {
         return ResponseEntity.ok(appUserService.getMessages(userID,friendID));
     }
 
+    @GetMapping(value = "/getGifItems")
+    public ResponseEntity<StreamingResponseBody> getGifItem(HttpServletRequest request){
+        return ResponseEntity.ok(appUserService.getGifItem());
+    }
+
 
 }

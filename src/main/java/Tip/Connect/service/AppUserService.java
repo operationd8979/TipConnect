@@ -3,6 +3,7 @@ package Tip.Connect.service;
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
+import Tip.Connect.model.Chat.GifItem;
 import Tip.Connect.model.Chat.WsRecord.NotificationChat;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.Relationship.FriendRequest;
@@ -14,6 +15,7 @@ import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.repository.AppUserRepository;
 import Tip.Connect.repository.FriendRequestRepository;
 import Tip.Connect.repository.FriendShipRepository;
+import Tip.Connect.repository.GifItemRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import Tip.Connect.validator.PhoneValidator;
@@ -47,6 +49,8 @@ public class AppUserService implements UserDetailsService {
     private final AppUserRepository appUserRepository;
     private final FriendShipRepository friendShipRepository;
     private final FriendRequestRepository friendRequestRepository;
+    private final GifItemRepository gifItemRepository;
+
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
@@ -268,6 +272,36 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
+    public StreamingResponseBody getGifItem(){
+        StreamingResponseBody stream = outputStream -> {
+            List<GifItem> listGifItem = gifItemRepository.findAll();
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<GifItem> gifItemStream = listGifItem.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+            if(gifItemStream!=null){
+                try{
+                    Iterator<GifItem> gifItemIterator = gifItemStream.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(gifItemIterator.hasNext()) {
+                        GifItem gifItemResponse = gifItemIterator.next();
+                        jsonGenerator.writeObject(gifItemResponse);
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(gifItemStream != null) {
+                        gifItemStream.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return stream;
+    }
+
     public HttpResponse addFriend(String userID,String friendID){
         AppUser user = appUserRepository.findById(userID).orElse(null);
         AppUser friend = appUserRepository.findById(friendID).orElse(null);
@@ -310,7 +344,7 @@ public class AppUserService implements UserDetailsService {
 
     @Transactional()
     public HttpResponse acceptFriendRequest(String userID,String requestID){
-        FriendRequest friendRequest = friendRequestRepository.findByRequestID(requestID).orElse(null);
+        FriendRequest friendRequest = friendRequestRepository.findById(requestID).orElse(null);
         if(friendRequest==null){
             return new MessageResponse(ErrorMessages.NOT_FOUND.getCode(), ErrorMessages.NOT_FOUND.getMessage());
         }
@@ -336,7 +370,7 @@ public class AppUserService implements UserDetailsService {
 
     @Transactional()
     public HttpResponse denyFriendRequest(String userID,String requestID){
-        FriendRequest friendRequest = friendRequestRepository.findByRequestID(requestID).orElse(null);
+        FriendRequest friendRequest = friendRequestRepository.findById(requestID).orElse(null);
         if(friendRequest==null){
             return new MessageResponse(ErrorMessages.NOT_FOUND.getCode(), ErrorMessages.NOT_FOUND.getMessage());
         }
