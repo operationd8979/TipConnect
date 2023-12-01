@@ -12,9 +12,7 @@ import lombok.Setter;
 public class RawChat {
 
     protected RecordType type;
-    protected String body;
-    protected long timestamp;
+    protected String timestamp;
     protected boolean seen = false;
-
 
 }

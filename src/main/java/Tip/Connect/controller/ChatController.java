@@ -42,7 +42,7 @@ public class ChatController {
     }
 
     @MessageMapping("/tradeRTC")
-    private void tradeRTC(@Payload MessageChat chat, Principal principal){
+    private void tradeRTC(@Payload MessageChat chat){
         System.out.println("nhận tin nhắn private from: "+chat.getFrom() +" to: "+chat.getTo());
         MessageChat message = chatService.tradeRTC(chat);
         if(message!=null){
@@ -50,7 +50,10 @@ public class ChatController {
         }
     }
 
-
+    @MessageMapping("/seen")
+    private void addSeenMessage(@Payload MessageChat chat){
+        chatService.addSeenMessage(chat);
+    }
 
 
 }

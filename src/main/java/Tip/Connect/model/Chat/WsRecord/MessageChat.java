@@ -12,11 +12,13 @@ public class MessageChat extends RawChat {
 
     private String from;
     private String to;
+    private String body;
 
     private boolean isUser = false;
 
-    public MessageChat(RecordType type, String body,long timestamp,boolean seen, String from, String to, boolean isUser){
-        super(type,body,timestamp,seen);
+    public MessageChat(RecordType type, String body,String timestamp,boolean seen, String from, String to, boolean isUser){
+        super(type,timestamp,seen);
+        this.body = body;
         this.from = from;
         this.to = to;
         this.isUser = isUser;

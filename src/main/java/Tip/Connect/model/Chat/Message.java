@@ -16,7 +16,7 @@ public class Message extends Record {
     @Column(length = 500)
     private String content;
 
-    public Message(AppUser user, AppUser user2, long timeStamp, RecordType type, String content){
+    public Message(AppUser user, AppUser user2, String timeStamp, RecordType type, String content){
         super(user,user2,timeStamp,type);
         this.content = content;
     }

@@ -241,7 +241,7 @@ public class AppUserService implements UserDetailsService {
             List<Record> listMyChat = user.getListMyChat().stream().filter(c->c.getReceiver().getId().equals(friendID)).collect(Collectors.toList());
             List<Record> listChat = user.getListChat().stream().filter(c->c.getSender().getId().equals(friendID)).collect(Collectors.toList());
             listMyChat.addAll(listChat);
-            listMyChat.sort(Comparator.comparingLong(Record::getTimeStamp));
+            listMyChat.sort(Comparator.comparingLong(Record::getTimeStampLong));
             List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listMyChat,userID);
 
             ObjectMapper objectMapper = new ObjectMapper();

@@ -61,7 +61,7 @@ public class DataRetrieveUtil {
             }catch(NoSuchElementException ex){}
 
             if(messageFriend!=null&&messageUser!=null){
-                message = messageFriend.getTimeStamp()>messageUser.getTimeStamp()?messageFriend:messageUser;
+                message = Long.parseLong(messageFriend.getTimeStamp()) > Long.parseLong(messageUser.getTimeStamp())?messageFriend:messageUser;
             }
             else{
                 message = messageUser!=null?messageUser:messageFriend!=null?messageFriend:null;

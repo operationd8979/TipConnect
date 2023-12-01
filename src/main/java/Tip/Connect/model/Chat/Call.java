@@ -16,7 +16,7 @@ public class Call extends Record {
 
     private long duration;
 
-    public Call(AppUser user, AppUser user2, long timeStamp, RecordType type, long duration){
+    public Call(AppUser user, AppUser user2, String timeStamp, RecordType type, long duration){
         super(user,user2,timeStamp,type);
         this.duration = duration;
     }

@@ -32,17 +32,21 @@ public class Record {
     )
     private AppUser receiver;
 
-    private long timeStamp;
+    private String timeStamp;
 
     private boolean seen = false;
 
     private RecordType type;
 
-    public Record(AppUser sender,AppUser receiver,long timeStamp,RecordType type){
+    public Record(AppUser sender,AppUser receiver,String timeStamp,RecordType type){
         this.sender = sender;
         this.receiver = receiver;
         this.timeStamp = timeStamp;
         this.type = type;
+    }
+
+    public long getTimeStampLong(){
+        return Long.parseLong(this.timeStamp);
     }
 
 

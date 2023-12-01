@@ -26,9 +26,9 @@ public class ChatService {
             return null;
         }
         try{
-            Record message = new Message(sender,receiver,new Date().getTime(),chat.getType(),chat.getBody());
+            Record message = new Message(sender,receiver,chat.getTimestamp(),chat.getType(),chat.getBody());
             chatRepository.save(message);
-            chat.setTimestamp(message.getTimeStamp());
+//            chat.setTimestamp(message.getTimeStamp());
             chat.setUser(false);
             chat.setSeen(false);
             return chat;
@@ -46,7 +46,6 @@ public class ChatService {
             return null;
         }
         try{
-            chat.setTimestamp(new Date().getTime());
             chat.setUser(false);
             return chat;
         }catch (Exception ex){
@@ -56,8 +55,25 @@ public class ChatService {
     }
 
 
-
-
+    @Transactional
+    public void addSeenMessage(MessageChat chat){
+//        AppUser sender = appUserService.loadUserByUserid(chat.getFrom());
+//        AppUser receiver = appUserService.loadUserByUserid(chat.getTo());
+//        if(sender==null||receiver==null){
+//            return null;
+//        }
+//        try{
+//            Record message = new Message(sender,receiver,new Date().getTime(),chat.getType(),chat.getBody());
+//            chatRepository.save(message);
+//            chat.setTimestamp(message.getTimeStamp());
+//            chat.setUser(false);
+//            chat.setSeen(false);
+//            return chat;
+//        }catch (Exception ex){
+//            ex.printStackTrace();
+//            return null;
+//        }
+    }
 
 
 }
