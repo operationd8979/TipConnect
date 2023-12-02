@@ -29,6 +29,7 @@ public class WebSecurityConfig {
 
     private static final String[] DOMAIN_FRIEND = {
             "http://localhost:3000",
+            "http://192.168.1.18:3000"
     };
 
     private static final String[] WHITE_LIST_URL = {

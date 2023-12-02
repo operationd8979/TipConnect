@@ -4,6 +4,7 @@ import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.model.Chat.GifItem;
+import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.model.Chat.WsRecord.NotificationChat;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.Relationship.FriendRequest;
@@ -231,7 +232,7 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
-    public StreamingResponseBody getMessages(String userID,String friendID) {
+    public StreamingResponseBody getMessages(String userID,String friendID,String offset,int limit) {
         AppUser user = appUserRepository.findById(userID).orElse(null);
         AppUser friend = appUserRepository.findById(friendID).orElse(null);
         if(user == null|| friend==null){
@@ -242,7 +243,45 @@ public class AppUserService implements UserDetailsService {
             List<Record> listChat = user.getListChat().stream().filter(c->c.getSender().getId().equals(friendID)).collect(Collectors.toList());
             listMyChat.addAll(listChat);
             listMyChat.sort(Comparator.comparingLong(Record::getTimeStampLong));
+            String newOffset = "";
+
+            if(offset.equals("")){
+                int length = listMyChat.size();
+                int start = Math.max(length - limit, 0);
+                System.out.println("[start]:"+start);
+                System.out.println("[length]:"+length);
+                listMyChat = listMyChat.subList(start, length);
+                System.out.println("[final length]:"+listMyChat.size());
+                if(listMyChat.size()>0){
+                    newOffset = listMyChat.get(0).getRecordID();
+                }
+            }
+            else{
+                int index = -1;
+                for (int i = 0; i < listMyChat.size(); i++) {
+                    if (listMyChat.get(i).getRecordID().equals(offset)) {
+                        index = i;
+                        break;
+                    }
+                }
+                System.out.println("[index of offset]:"+index);
+                if (index != -1) {
+                    listMyChat = listMyChat.subList(0, index);
+                }
+                if (index != 0){
+                    int length = listMyChat.size();
+                    int start = Math.max(length - limit, 0);
+                    System.out.println("[start]:"+start);
+                    System.out.println("[length]:"+length);
+                    listMyChat = listMyChat.subList(start, length);
+                    System.out.println("[final length]:"+listMyChat.size());
+                    newOffset = listMyChat.get(0).getRecordID();
+                }
+            }
+
             List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listMyChat,userID);
+            if(listChatResponse.size()>0)
+                listChatResponse.get(0).setOffset(newOffset);
 
             ObjectMapper objectMapper = new ObjectMapper();
             Stream<RawChat> rawChatStream = listChatResponse.stream();

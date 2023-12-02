@@ -114,13 +114,14 @@ public class UserController {
         return ResponseEntity.ok(appUserService.denyFriendRequest(userID,requestID));
     }
 
-    @GetMapping(value = "/getMessages/{friendID}")
-    public ResponseEntity<StreamingResponseBody> getMessages(HttpServletRequest request,@PathVariable("friendID") String friendID){
+    @GetMapping(value = "/getMessages/{friendID}&{offset}&{limit}")
+    public ResponseEntity<StreamingResponseBody> getMessages(HttpServletRequest request,@PathVariable("friendID") String friendID,@PathVariable("offset") String offset, @PathVariable("limit") String limit){
+        System.out.println("[GET MESSAGE] offset: "+offset+" limit: "+limit);
         String userID = appUserService.getUserIdByHttpRequest(request);
         if(userID==null){
             return ResponseEntity.ok(null);
         }
-        return ResponseEntity.ok(appUserService.getMessages(userID,friendID));
+        return ResponseEntity.ok(appUserService.getMessages(userID,friendID,offset,Integer.parseInt(limit)));
     }
 
     @GetMapping(value = "/getGifItems")

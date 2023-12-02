@@ -8,11 +8,17 @@ import lombok.Setter;
 
 @Setter
 @Getter
-@AllArgsConstructor
 public class RawChat {
 
     protected RecordType type;
     protected String timestamp;
     protected boolean seen = false;
+    private String offset;
+
+    public RawChat(RecordType type,String timestamp,boolean seen){
+        this.type = type;
+        this.timestamp = timestamp;
+        this.seen = seen;
+    }
 
 }
