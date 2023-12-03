@@ -2,6 +2,7 @@ package Tip.Connect.controller;
 
 
 import Tip.Connect.model.Chat.WsRecord.MessageChat;
+import Tip.Connect.model.Chat.WsRecord.SeenNotification;
 import Tip.Connect.service.ChatService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +27,12 @@ public class ChatController {
     @MessageMapping("/all")
     @SendTo("/all/messages")
     private MessageChat receivePublicMessage(@Payload MessageChat message, Principal principal){
-        System.out.println("nhận tin nhắn from: "+principal.getName());
         message.setFrom(principal.getName());
         return message;
     }
 
     @MessageMapping("/private")
     private void receivePrivateMessage(@Payload MessageChat chat, Principal principal){
-        System.out.println("nhận tin nhắn private from: "+principal.getName() +" to: "+chat.getTo());
         chat.setFrom(principal.getName());
         MessageChat message = chatService.saveMessage(chat);
         if(message!=null){
@@ -41,18 +40,21 @@ public class ChatController {
         }
     }
 
-    @MessageMapping("/tradeRTC")
+    @MessageMapping("/trade")
     private void tradeRTC(@Payload MessageChat chat){
-        System.out.println("nhận tin nhắn private from: "+chat.getFrom() +" to: "+chat.getTo());
         MessageChat message = chatService.tradeRTC(chat);
         if(message!=null){
             simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",message);
         }
     }
 
+
     @MessageMapping("/seen")
-    private void addSeenMessage(@Payload MessageChat chat){
-        chatService.addSeenMessage(chat);
+    private void addSeen(@Payload SeenNotification seenNotification, Principal principal){
+        seenNotification.setTo(principal.getName());
+        if(chatService.addSeen(seenNotification)){
+            simpMessagingTemplate.convertAndSendToUser(seenNotification.getFrom(),"/private",seenNotification);
+        }
     }
 
 
