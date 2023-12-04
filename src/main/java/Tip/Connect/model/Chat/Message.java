@@ -21,4 +21,9 @@ public class Message extends Record {
         this.content = content;
     }
 
+    @Override
+    public boolean isContainContent(String content) {
+        return this.content.contains(content.trim().strip());
+    }
+
 }

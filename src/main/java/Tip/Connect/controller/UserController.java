@@ -1,21 +1,23 @@
 package Tip.Connect.controller;
 
 import Tip.Connect.constant.ErrorMessages;
-import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.UpdateAvatarRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.service.AppUserService;
-import Tip.Connect.service.FireBaseService;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(path = "api/user")
@@ -54,19 +56,61 @@ public class UserController {
 
 
     @GetMapping(value = "/search/{query}&{offset}&{limit}")
-    public ResponseEntity<HttpResponse> search(HttpServletRequest request,@PathVariable("query") String query, @PathVariable("offset") String offset, @PathVariable("limit") String limit) {
+    public ResponseEntity<StreamingResponseBody> search(HttpServletRequest request,@PathVariable("query") String query, @PathVariable("offset") int offset, @PathVariable("limit") int limit) {
         String userID = appUserService.getUserIdByHttpRequest(request);
         if(userID==null){
-            return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getCode()).errorMessage(ErrorMessages.USERNAME_NOT_FOUND_ERROR.getMessage()).build());
+            return ResponseEntity.ok(null);
         }
-        //check email or number return userAim
-        TinyUser aimUser = appUserService.searchAimUser(userID,query);
-        //return all message match
-        List<Record> messages = appUserService.searchMessages(userID,query);
-        //filter with range for messages
+        StreamingResponseBody stream = outputStream -> {
+            TinyUser aimUser = appUserService.searchAimUser(userID,query);
+            List<RawChat> messages = appUserService.searchMessages(userID,query);
+            int currentOffset = 0;
 
-        //return response
-        return ResponseEntity.ok(new SearchResponse.builder().code(200).tinyUser(aimUser).listMessage(messages).build());
+            if(offset==0){
+                int length = messages.size();
+                int end = Math.min(limit, length);
+                messages = messages.subList(0, end);
+                if(end==limit){
+                    currentOffset = end;
+                }
+            }
+            else{
+                messages = messages.subList(offset,messages.size());
+                int length = messages.size();
+                int end = Math.min(limit, length);
+                messages = messages.subList(0, end);
+                if(end==limit){
+                    currentOffset = offset+limit;
+                }
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+            jsonGenerator.writeStartArray();
+
+            jsonGenerator.writeObject(new SearchResponse.builder().code(200).tinyUser(aimUser).offset(currentOffset).build());
+            Stream<RawChat> rawChatStream = messages.stream();
+            if(rawChatStream!=null){
+                try{
+                    Iterator<RawChat> rawChatIterator = rawChatStream.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(rawChatIterator.hasNext()) {
+                        RawChat rawChat = rawChatIterator.next();
+                        jsonGenerator.writeObject(rawChat);
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }
+            jsonGenerator.writeEndArray();
+            if(rawChatStream != null) {
+                rawChatStream.close();
+            }
+            if(jsonGenerator != null)  {
+                jsonGenerator.close();
+            }
+        };
+        return ResponseEntity.ok(stream);
     }
 
     @GetMapping(value = "/getFriendRequests")

@@ -4,6 +4,7 @@ import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.model.Chat.GifItem;
+import Tip.Connect.model.Chat.RecordType;
 import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.model.Chat.WsRecord.NotificationChat;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
@@ -89,9 +90,17 @@ public class AppUserService implements UserDetailsService {
         return null;
     }
 
-    public List<Record> searchMessages(String userID,String query){
-        List<Record> recordList = new ArrayList<>();
-        return recordList;
+    public List<RawChat> searchMessages(String userID,String query){
+        AppUser user = loadUserByUserid(userID);
+        if(user == null){
+            return null;
+        }
+        List<Record> listMyChat = user.getListMyChat();
+        List<Record> listChat = user.getListChat();
+        listMyChat.addAll(listChat);
+        List<Record> messages = listMyChat.stream().filter(c->c.isContainContent(query)&&c.getType().equals(RecordType.MESSAGE)).collect(Collectors.toList());
+        messages.sort(Comparator.comparingLong(Record::getTimeStampLong).reversed());
+        return dataRetrieveUtil.TranslateRecordToResponse(messages,userID);
     }
 
     public HttpResponse getUserInfo(String userID){
@@ -248,10 +257,7 @@ public class AppUserService implements UserDetailsService {
             if(offset.equals("")){
                 int length = listMyChat.size();
                 int start = Math.max(length - limit, 0);
-                System.out.println("[start]:"+start);
-                System.out.println("[length]:"+length);
                 listMyChat = listMyChat.subList(start, length);
-                System.out.println("[final length]:"+listMyChat.size());
                 if(listMyChat.size()>0){
                     newOffset = listMyChat.get(0).getRecordID();
                 }
@@ -264,17 +270,13 @@ public class AppUserService implements UserDetailsService {
                         break;
                     }
                 }
-                System.out.println("[index of offset]:"+index);
                 if (index != -1) {
                     listMyChat = listMyChat.subList(0, index);
                 }
                 if (index != 0){
                     int length = listMyChat.size();
                     int start = Math.max(length - limit, 0);
-                    System.out.println("[start]:"+start);
-                    System.out.println("[length]:"+length);
                     listMyChat = listMyChat.subList(start, length);
-                    System.out.println("[final length]:"+listMyChat.size());
                     newOffset = listMyChat.get(0).getRecordID();
                 }
             }

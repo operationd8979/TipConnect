@@ -21,4 +21,8 @@ public class Call extends Record {
         this.duration = duration;
     }
 
+    @Override
+    public boolean isContainContent(String content) {
+        return false;
+    }
 }

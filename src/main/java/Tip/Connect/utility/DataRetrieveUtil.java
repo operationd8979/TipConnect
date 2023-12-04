@@ -35,11 +35,6 @@ public class DataRetrieveUtil {
         tinyUser.setState(StateAimUser.FRIEND);
         RawChat chat = null;
         if(message!=null){
-//            System.out.println("[người gửi]: " + message.getSender().getFullName());
-//            System.out.println("[người nhận]: " + message.getReceiver().getFullName());
-//            System.out.println("[friendShip[user]]: " + friendShip.getFriendShipId().getUser().getFullName());
-//            System.out.println("[friendShip[friend]]: " + friendShip.getFriendShipId().getFriend().getFullName());
-//            System.out.println("[isUser]:" + message.getSender().getId().equals(friendShip.getFriendShipId().getUser().getId()));
             chat = TranslateRecordToTiny(message,message.getSender().getId().equals(friendShip.getFriendShipId().getUser().getId()));
         }
         FriendShipRespone friendShipRespone = new FriendShipRespone(friendShip.getFriendShipId().toString(),tinyUser,friendShip.getType(),chat);

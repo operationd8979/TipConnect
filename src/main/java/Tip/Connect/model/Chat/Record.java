@@ -12,7 +12,7 @@ import org.hibernate.annotations.GenericGenerator;
 @Getter
 @Entity
 @Table(name = "record", indexes = @Index(columnList = "timestamp"))
-public class Record {
+public abstract class Record {
     @Id
     @GeneratedValue(generator = "custom-id", strategy = GenerationType.IDENTITY)
     @GenericGenerator(name = "custom-id", strategy = "Tip.Connect.security.RecordIdGenerator")
@@ -48,6 +48,8 @@ public class Record {
     public long getTimeStampLong(){
         return Long.parseLong(this.timeStamp);
     }
+
+    public abstract boolean isContainContent(String content);
 
 
 }
