@@ -9,6 +9,7 @@ public enum RecordType {
     GIF,
     MULTIFILES,
     CALL,
+    ENDCALL,
     SYSTEM,
     RTC
 }

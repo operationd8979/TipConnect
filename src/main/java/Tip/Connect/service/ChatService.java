@@ -3,6 +3,7 @@ package Tip.Connect.service;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Chat.Message;
 import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.Chat.RecordType;
 import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.model.Chat.WsRecord.SeenNotification;
 import Tip.Connect.repository.ChatRepository;
@@ -28,9 +29,13 @@ public class ChatService {
         }
         try{
             Record message = new Message(sender,receiver,chat.getTimestamp(),chat.getType(),chat.getBody());
-            chatRepository.save(message);
             chat.setUser(false);
             chat.setSeen(false);
+            if(chat.getType().equals(RecordType.ENDCALL)){
+                chat.setSeen(true);
+                message.setSeen(true);
+            }
+            chatRepository.save(message);
             return chat;
         }catch (Exception ex){
             ex.printStackTrace();

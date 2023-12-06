@@ -1,6 +1,7 @@
 package Tip.Connect.controller;
 
 
+import Tip.Connect.model.Chat.RecordType;
 import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.model.Chat.WsRecord.SeenNotification;
 import Tip.Connect.service.ChatService;
@@ -35,8 +36,16 @@ public class ChatController {
     private void receivePrivateMessage(@Payload MessageChat chat, Principal principal){
         chat.setFrom(principal.getName());
         MessageChat message = chatService.saveMessage(chat);
+        System.out.println(message.getType());
         if(message!=null){
-            simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",message);
+            if(message.getType().equals(RecordType.ENDCALL)){
+                simpMessagingTemplate.convertAndSendToUser(message.getTo(),"/private",message);
+                message.setUser(true);
+                simpMessagingTemplate.convertAndSendToUser(message.getFrom(),"/private",message);
+            }
+            else{
+                simpMessagingTemplate.convertAndSendToUser(message.getTo(),"/private",message);
+            }
         }
     }
 
