@@ -11,6 +11,7 @@ import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
 import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.Relationship.TypeFriendShip;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.model.request.UpdateRequest;
@@ -143,6 +144,19 @@ public class AppUserService implements UserDetailsService {
         appUserRepository.save(user);
         TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(user);
         return new AuthenticationReponse.builder().code(200).message("Upload avatar successfully!").build();
+    }
+
+    public HttpResponse updateTypeFriend(String userID, String friendID, TypeFriendShip type){
+        AppUser user = loadUserByUserid(userID);
+        if(user!=null){
+            FriendShip friendShip = user.getListFrienst().stream().filter(f->f.getFriendShipId().getFriend().getId().equals(friendID)).findFirst().orElse(null);
+            if(friendShip!=null){
+                friendShip.setType(type);
+                friendShipRepository.save(friendShip);
+                return new MessageResponse(200,"OK");
+            }
+        }
+        return new ErrorReponse.builder().code(ErrorMessages.NOT_FOUND.getCode()).errorMessage(ErrorMessages.NOT_FOUND.getMessage()).build();
     }
 
     public StreamingResponseBody getListFriend(String userID){

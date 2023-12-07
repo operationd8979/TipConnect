@@ -2,6 +2,7 @@ package Tip.Connect.controller;
 
 import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
+import Tip.Connect.model.Relationship.TypeFriendShip;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.UpdateAvatarRequest;
 import Tip.Connect.model.request.UpdateRequest;
@@ -171,6 +172,13 @@ public class UserController {
     @GetMapping(value = "/getGifItems")
     public ResponseEntity<StreamingResponseBody> getGifItem(HttpServletRequest request){
         return ResponseEntity.ok(appUserService.getGifItem());
+    }
+
+
+    @GetMapping(value = "/updateTypeFriend/{friendID}&{type}")
+    public ResponseEntity<HttpResponse> updateTypeFriend(HttpServletRequest request,@PathVariable("friendID") String friendID,@PathVariable("type") TypeFriendShip type){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        return ResponseEntity.ok(appUserService.updateTypeFriend(userID,friendID,type));
     }
 
 
