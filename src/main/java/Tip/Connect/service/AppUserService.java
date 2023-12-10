@@ -159,6 +159,16 @@ public class AppUserService implements UserDetailsService {
         return new ErrorReponse.builder().code(ErrorMessages.NOT_FOUND.getCode()).errorMessage(ErrorMessages.NOT_FOUND.getMessage()).build();
     }
 
+    @Transactional
+    public List<String> getListFriendID(String userID){
+        var userDetails = appUserRepository.findById(userID).orElse(null);
+        if(userDetails == null){
+            return null;
+        }
+        List<FriendShip> listRaw = userDetails.getListFrienst();
+        return listRaw.stream().map(f->f.getFriendShipId().getFriend().getId()).collect(Collectors.toList());
+    }
+
     public StreamingResponseBody getListFriend(String userID){
         var userDetails = appUserRepository.findById(userID).orElse(null);
         if(userDetails == null){

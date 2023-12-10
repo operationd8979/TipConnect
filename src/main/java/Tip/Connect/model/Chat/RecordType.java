@@ -11,5 +11,6 @@ public enum RecordType {
     CALL,
     ENDCALL,
     SYSTEM,
-    RTC
+    RTC,
+    ONLINE
 }
