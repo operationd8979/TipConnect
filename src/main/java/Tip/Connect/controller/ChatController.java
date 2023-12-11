@@ -81,7 +81,6 @@ public class ChatController {
         List<String> listFriendID = appUserService.getListFriendID(userID);
         for(String friendID : listFriendID){
             if(map.containsKey(friendID)){
-                System.out.println(friendID);
                 simpMessagingTemplate.convertAndSendToUser(friendID,"/private",message);
             }
         }

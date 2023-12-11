@@ -22,6 +22,8 @@ import Tip.Connect.repository.GifItemRepository;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import Tip.Connect.validator.PhoneValidator;
+import Tip.Connect.websocket.config.PrincipalUser;
+import Tip.Connect.websocket.config.UserInterceptor;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -177,6 +179,7 @@ public class AppUserService implements UserDetailsService {
         StreamingResponseBody stream = outputStream -> {
             List<FriendShip> listRaw = userDetails.getListFrienst();
             List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToResponse(listRaw,userDetails);
+            Map<String, PrincipalUser> map = UserInterceptor.loggedInUsers;
 
 //            String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
 //            for(int i = 0;i<102;i++){
@@ -196,6 +199,9 @@ public class AppUserService implements UserDetailsService {
                     jsonGenerator.writeStartArray();
                     while(friendShipIterator.hasNext()) {
                         FriendShipRespone friendShipRespone = friendShipIterator.next();
+                        if(map.containsKey(friendShipRespone.getFriend().getUserID())){
+                            friendShipRespone.setTimeStamp(Long.toString(new Date().getTime()));
+                        }
                         jsonGenerator.writeObject(friendShipRespone);
                         i++;
                         if(i==10){

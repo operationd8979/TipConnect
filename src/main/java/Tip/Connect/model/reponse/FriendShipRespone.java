@@ -22,5 +22,13 @@ public class FriendShipRespone {
     private TypeFriendShip type;
     @JsonProperty("message")
     private RawChat message;
+    @JsonProperty("timeStamp")
+    private String timeStamp;
 
+    public FriendShipRespone(String id, TinyUser friend, TypeFriendShip type, RawChat message) {
+        this.id = id;
+        this.friend = friend;
+        this.type = type;
+        this.message = message;
+    }
 }

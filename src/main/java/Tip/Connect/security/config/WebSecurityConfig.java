@@ -35,7 +35,8 @@ public class WebSecurityConfig {
     private static final String[] WHITE_LIST_URL = {
             "/api/v1/registration/**",
             "/api/v1/auth/**",
-            "/ws/**"
+            "/ws/**",
+            "/api/user/live/**"
     };
 
     private static final String[] USER_LIST_URL = {

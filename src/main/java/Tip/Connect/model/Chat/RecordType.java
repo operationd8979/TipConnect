@@ -10,7 +10,8 @@ public enum RecordType {
     MULTIFILES,
     CALL,
     ENDCALL,
+    GEO,
     SYSTEM,
     RTC,
-    ONLINE
+    ONLINE,
 }
