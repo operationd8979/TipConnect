@@ -14,4 +14,5 @@ public enum RecordType {
     SYSTEM,
     RTC,
     ONLINE,
+    LIVE,
 }

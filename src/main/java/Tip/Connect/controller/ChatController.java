@@ -9,17 +9,22 @@ import Tip.Connect.service.AppUserService;
 import Tip.Connect.service.ChatService;
 import Tip.Connect.websocket.config.PrincipalUser;
 import Tip.Connect.websocket.config.UserInterceptor;
-import jakarta.servlet.http.HttpServletRequest;
+import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -83,6 +88,38 @@ public class ChatController {
             if(map.containsKey(friendID)){
                 simpMessagingTemplate.convertAndSendToUser(friendID,"/private",message);
             }
+        }
+    }
+
+    @MessageMapping("/live")
+    private void liveAction(@Payload MessageChat chat, Principal principal){
+        List<String> liveList = LiveController.liveList;
+        List<String> watchList = LiveController.watchList;
+        System.out.println(chat.getBody());
+        if(chat.getBody().equals("live")){
+            liveList.add(chat.getFrom());
+        }
+        if(chat.getBody().equals("off")){
+            liveList.remove(chat.getFrom());
+        }
+        if(chat.getBody().equals("off-watch")){
+            String userID = chat.getFrom();
+            watchList.remove(userID);
+        }
+        if(chat.getBody().equals("watch")){
+            String hostID = chat.getTo();
+            String userID = chat.getFrom();
+            if(watchList.size()>0){
+                hostID = Iterables.getLast(() -> watchList.iterator());
+            }
+            watchList.add(chat.getFrom());
+            chat.setBody("host");
+            chat.setFrom(hostID);
+            chat.setTo(userID);
+            simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",chat);
+        }
+        for(String s : liveList){
+            System.out.println(s);
         }
     }
 

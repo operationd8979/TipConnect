@@ -1,6 +1,7 @@
 package Tip.Connect.service;
 
 import Tip.Connect.constant.ErrorMessages;
+import Tip.Connect.controller.LiveController;
 import Tip.Connect.model.Auth.AppUser;
 import Tip.Connect.model.Auth.ConfirmationToken;
 import Tip.Connect.model.Chat.GifItem;
@@ -233,6 +234,50 @@ public class AppUserService implements UserDetailsService {
         };
         return stream;
     }
+
+    public StreamingResponseBody getListLive(String userID){
+        var userDetails = appUserRepository.findById(userID).orElse(null);
+        if(userDetails == null){
+            return null;
+        }
+        StreamingResponseBody stream = outputStream -> {
+            List<String> listLive = LiveController.liveList;
+            List<AppUser> listUserLive = new ArrayList<>();
+            for(String l:listLive){
+                AppUser live = loadUserByUserid(l);
+                listUserLive.add(live);
+            }
+            List<TinyUser> listUserLiveResponse = new ArrayList<>();
+            for(AppUser liver: listUserLive){
+                listUserLiveResponse.add(dataRetrieveUtil.TranslateAppUserToTiny(liver));
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<TinyUser> streamLive = listUserLiveResponse.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+            if(streamLive!=null){
+                try{
+                    Iterator<TinyUser> iteratorLive = streamLive.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(iteratorLive.hasNext()) {
+                        TinyUser liver = iteratorLive.next();
+                        jsonGenerator.writeObject(liver);
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(streamLive != null) {
+                        streamLive.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return stream;
+    }
+
 
     public StreamingResponseBody getFriendRequests(String userID) {
         AppUser userDetails = appUserRepository.findById(userID).orElse(null);
