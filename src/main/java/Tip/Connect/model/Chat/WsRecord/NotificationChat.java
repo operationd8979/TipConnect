@@ -2,7 +2,7 @@ package Tip.Connect.model.Chat.WsRecord;
 
 import Tip.Connect.model.Chat.RecordType;
 import Tip.Connect.model.reponse.FriendRResponse;
-import Tip.Connect.model.reponse.FriendShipRespone;
+import Tip.Connect.model.reponse.RelationShipResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,8 +16,8 @@ public class NotificationChat extends RawChat {
     @JsonProperty("friendRResponse")
     private FriendRResponse friendRResponse;
 
-    @JsonProperty("friendShipRespone")
-    private FriendShipRespone friendShipRespone;
+    @JsonProperty("relationShipResponse")
+    private RelationShipResponse relationShipResponse;
 
     @JsonProperty("actionCode")
     private int actionCode = 0;
@@ -29,9 +29,9 @@ public class NotificationChat extends RawChat {
         this.actionCode = actionCode;
     }
 
-    public NotificationChat(FriendShipRespone friendShipRespone, int actionCode){
+    public NotificationChat(RelationShipResponse relationShipResponse, int actionCode){
         super(RecordType.SYSTEM,Long.toString(new Date().getTime()),false);
-        this.friendShipRespone = friendShipRespone;
+        this.relationShipResponse = relationShipResponse;
         this.actionCode = actionCode;
     }
 

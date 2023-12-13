@@ -1,6 +1,7 @@
 package Tip.Connect.model.Chat;
 
 import Tip.Connect.model.Auth.AppUser;
+import Tip.Connect.model.Relationship.RelationShip;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,9 +29,9 @@ public abstract class Record {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             nullable = false,
-            name = "receiver_id"
+            name = "relation_ship_id"
     )
-    private AppUser receiver;
+    private RelationShip relationShip;
 
     private String timeStamp;
 
@@ -38,9 +39,9 @@ public abstract class Record {
 
     private RecordType type;
 
-    public Record(AppUser sender,AppUser receiver,String timeStamp,RecordType type){
+    public Record(AppUser sender,RelationShip relationShip,String timeStamp,RecordType type){
         this.sender = sender;
-        this.receiver = receiver;
+        this.relationShip = relationShip;
         this.timeStamp = timeStamp;
         this.type = type;
     }

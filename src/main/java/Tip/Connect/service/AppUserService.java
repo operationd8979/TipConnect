@@ -9,17 +9,12 @@ import Tip.Connect.model.Chat.RecordType;
 import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.model.Chat.WsRecord.NotificationChat;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
-import Tip.Connect.model.Relationship.FriendRequest;
-import Tip.Connect.model.Relationship.FriendShip;
+import Tip.Connect.model.Relationship.*;
 import Tip.Connect.model.Chat.Record;
-import Tip.Connect.model.Relationship.TypeFriendShip;
 import Tip.Connect.model.reponse.*;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.model.request.UpdateRequest;
-import Tip.Connect.repository.AppUserRepository;
-import Tip.Connect.repository.FriendRequestRepository;
-import Tip.Connect.repository.FriendShipRepository;
-import Tip.Connect.repository.GifItemRepository;
+import Tip.Connect.repository.*;
 import Tip.Connect.utility.DataRetrieveUtil;
 import Tip.Connect.validator.EmailValidator;
 import Tip.Connect.validator.PhoneValidator;
@@ -53,7 +48,8 @@ import java.util.stream.Stream;
 public class AppUserService implements UserDetailsService {
 
     private final AppUserRepository appUserRepository;
-    private final FriendShipRepository friendShipRepository;
+    private final RelationShipRepository relationShipRepository;
+    private final DetailRelationShipRepository detailRelationShipRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final GifItemRepository gifItemRepository;
 
@@ -68,7 +64,48 @@ public class AppUserService implements UserDetailsService {
     private final EmailValidator emailValidator;
     private final PhoneValidator phoneValidator;
 
-
+    public StreamingResponseBody getListLive(String userID){
+        var userDetails = appUserRepository.findById(userID).orElse(null);
+        if(userDetails == null){
+            return null;
+        }
+        StreamingResponseBody stream = outputStream -> {
+            List<String> listLive = LiveController.liveList;
+            List<AppUser> listUserLive = new ArrayList<>();
+            for(String l:listLive){
+                AppUser live = loadUserByUserid(l);
+                listUserLive.add(live);
+            }
+            List<TinyUser> listUserLiveResponse = new ArrayList<>();
+            for(AppUser liver: listUserLive){
+                listUserLiveResponse.add(dataRetrieveUtil.TranslateAppUserToTiny(liver));
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<TinyUser> streamLive = listUserLiveResponse.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+            if(streamLive!=null){
+                try{
+                    Iterator<TinyUser> iteratorLive = streamLive.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(iteratorLive.hasNext()) {
+                        TinyUser liver = iteratorLive.next();
+                        jsonGenerator.writeObject(liver);
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(streamLive != null) {
+                        streamLive.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return stream;
+    }
 
     public TinyUser searchAimUser(String userID,String query){
         var user = appUserRepository.findById(userID).orElse(null);
@@ -79,13 +116,14 @@ public class AppUserService implements UserDetailsService {
                 if(aimUser.getUserID().equals(userID)){
                     aimUser.setState(StateAimUser.SELF);
                 }
-                if(user.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(query))){
+                if(user.getSentFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(query)&&!r.isEnable())){
                     aimUser.setState(StateAimUser.ONSEND);
                 }
-                if(queryUser.getFriendRequests().stream().anyMatch(r->r.getReceiver().getEmail().equals(user.getEmail()))){
+                if(user.getReceivedFriendRequests().stream().anyMatch(r->r.getSender().getEmail().equals(query)&&!r.isEnable())){
                     aimUser.setState(StateAimUser.ONWAIT);
                 }
-                if(user.getListFrienst().stream().anyMatch(f->f.getFriendShipId().getFriend().getEmail().equals(query))){
+                List<FriendShip> friendShips = user.getDetailRelationShipList().stream().map(d->d.getRelationShip()).filter(FriendShip.class::isInstance).map(FriendShip.class::cast).collect(Collectors.toList());
+                if(friendShips.stream().anyMatch(f->f.getListDetailRelationShip().stream().map(d->d.getUser()).findFirst().orElse(null).getEmail().equals(query))){
                     aimUser.setState(StateAimUser.FRIEND);
                 }
                 return aimUser;
@@ -99,10 +137,12 @@ public class AppUserService implements UserDetailsService {
         if(user == null){
             return null;
         }
-        List<Record> listMyChat = user.getListMyChat();
-        List<Record> listChat = user.getListChat();
-        listMyChat.addAll(listChat);
-        List<Record> messages = listMyChat.stream().filter(c->c.isContainContent(query)&&c.getType().equals(RecordType.MESSAGE)).collect(Collectors.toList());
+        List<RelationShip> myRelationShips = user.getDetailRelationShipList().stream().map(d->d.getRelationShip()).collect(Collectors.toList());
+        List<Record> listChat = new ArrayList<>();
+        for(RelationShip relationShip: myRelationShips){
+            listChat.addAll(relationShip.getListChat());
+        }
+        List<Record> messages = listChat.stream().filter(c->c.isContainContent(query)&&c.getType().equals(RecordType.MESSAGE)).collect(Collectors.toList());
         messages.sort(Comparator.comparingLong(Record::getTimeStampLong).reversed());
         return dataRetrieveUtil.TranslateRecordToResponse(messages,userID);
     }
@@ -149,13 +189,13 @@ public class AppUserService implements UserDetailsService {
         return new AuthenticationReponse.builder().code(200).message("Upload avatar successfully!").build();
     }
 
-    public HttpResponse updateTypeFriend(String userID, String friendID, TypeFriendShip type){
+    public HttpResponse updateTypeFriend(String userID, String relationShipID, TypeRelationShip type){
         AppUser user = loadUserByUserid(userID);
         if(user!=null){
-            FriendShip friendShip = user.getListFrienst().stream().filter(f->f.getFriendShipId().getFriend().getId().equals(friendID)).findFirst().orElse(null);
-            if(friendShip!=null){
-                friendShip.setType(type);
-                friendShipRepository.save(friendShip);
+            DetailRelationShip detailRelationShip = user.getDetailRelationShipList().stream().filter(d->d.getRelationShip().getRelationshipID().equals(relationShipID)).findFirst().orElse(null);
+            if(detailRelationShip!=null){
+                detailRelationShip.setType(type);
+                detailRelationShipRepository.save(detailRelationShip);
                 return new MessageResponse(200,"OK");
             }
         }
@@ -168,8 +208,12 @@ public class AppUserService implements UserDetailsService {
         if(userDetails == null){
             return null;
         }
-        List<FriendShip> listRaw = userDetails.getListFrienst();
-        return listRaw.stream().map(f->f.getFriendShipId().getFriend().getId()).collect(Collectors.toList());
+        List<RelationShip> relationShips = userDetails.getDetailRelationShipList()
+                .stream().map(d->d.getRelationShip()).collect(Collectors.toList());
+        List<FriendShip> friendShips = relationShips.stream()
+                .filter(FriendShip.class::isInstance).map(FriendShip.class::cast).collect(Collectors.toList());
+        List<String> friendIDs = friendShips.stream().map(f->f.getListAppUser().stream().filter(a->!a.equals(userDetails)).findFirst().orElse(null).getId()).collect(Collectors.toList());
+        return friendIDs;
     }
 
     public StreamingResponseBody getListFriend(String userID){
@@ -178,45 +222,28 @@ public class AppUserService implements UserDetailsService {
             return null;
         }
         StreamingResponseBody stream = outputStream -> {
-            List<FriendShip> listRaw = userDetails.getListFrienst();
-            List<FriendShipRespone> listFriend = dataRetrieveUtil.TranslateFriendShipToResponse(listRaw,userDetails);
+            List<DetailRelationShip> detailRelationShips = userDetails.getDetailRelationShipList();
+            List<RelationShipResponse> listFriend = dataRetrieveUtil.TranslateRelationShipToResponse(detailRelationShips);
+            for(RelationShipResponse response: listFriend){
+                System.out.println(response);
+            }
+            //check online status
             Map<String, PrincipalUser> map = UserInterceptor.loggedInUsers;
-
-//            String urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
-//            for(int i = 0;i<102;i++){
-//                String str = Integer.toString(i);
-//                TinyUser friend = new TinyUser(str,"Name",str,"Name "+str,urlAvatar);
-//                listFriend.add(new FriendShipRespone(Integer.toUnsignedLong(i),friend, TypeFriendShip.COMMON));
-//            }
-
             ObjectMapper objectMapper = new ObjectMapper();
-            Stream<FriendShipRespone> streamFriend = listFriend.stream();
+            Stream<RelationShipResponse> streamFriend = listFriend.stream();
             JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
-
             if(streamFriend!=null){
                 try{
-                    int i = 0;
-                    Iterator<FriendShipRespone> friendShipIterator = streamFriend.iterator();
+                    Iterator<RelationShipResponse> friendShipIterator = streamFriend.iterator();
                     jsonGenerator.writeStartArray();
                     while(friendShipIterator.hasNext()) {
-                        FriendShipRespone friendShipRespone = friendShipIterator.next();
-                        if(map.containsKey(friendShipRespone.getFriend().getUserID())){
-                            friendShipRespone.setTimeStamp(Long.toString(new Date().getTime()));
+                        RelationShipResponse relationShipResponse = friendShipIterator.next();
+                        if(!relationShipResponse.isGroup()){
+                            if(map.containsKey(relationShipResponse.getFriends().stream().findFirst().orElse(null).getUserID())){
+                                relationShipResponse.setTimeStamp(Long.toString(new Date().getTime()));
+                            }
                         }
-                        jsonGenerator.writeObject(friendShipRespone);
-                        i++;
-                        if(i==10){
-                            i = 0;
-                            jsonGenerator.writeEndArray();
-                            jsonGenerator.writeStartArray();
-                        }
-
-//                            try{
-//                                Thread.sleep(300);
-//                            }catch (InterruptedException e){
-//                                e.printStackTrace();
-//                            }
-
+                        jsonGenerator.writeObject(relationShipResponse);
                     }
                     jsonGenerator.writeEndArray();
                 }catch (Exception ex){
@@ -234,50 +261,6 @@ public class AppUserService implements UserDetailsService {
         };
         return stream;
     }
-
-    public StreamingResponseBody getListLive(String userID){
-        var userDetails = appUserRepository.findById(userID).orElse(null);
-        if(userDetails == null){
-            return null;
-        }
-        StreamingResponseBody stream = outputStream -> {
-            List<String> listLive = LiveController.liveList;
-            List<AppUser> listUserLive = new ArrayList<>();
-            for(String l:listLive){
-                AppUser live = loadUserByUserid(l);
-                listUserLive.add(live);
-            }
-            List<TinyUser> listUserLiveResponse = new ArrayList<>();
-            for(AppUser liver: listUserLive){
-                listUserLiveResponse.add(dataRetrieveUtil.TranslateAppUserToTiny(liver));
-            }
-            ObjectMapper objectMapper = new ObjectMapper();
-            Stream<TinyUser> streamLive = listUserLiveResponse.stream();
-            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
-            if(streamLive!=null){
-                try{
-                    Iterator<TinyUser> iteratorLive = streamLive.iterator();
-                    jsonGenerator.writeStartArray();
-                    while(iteratorLive.hasNext()) {
-                        TinyUser liver = iteratorLive.next();
-                        jsonGenerator.writeObject(liver);
-                    }
-                    jsonGenerator.writeEndArray();
-                }catch (Exception ex){
-                    ex.printStackTrace();
-                }finally {
-                    if(streamLive != null) {
-                        streamLive.close();
-                    }
-                    if(jsonGenerator != null)  {
-                        jsonGenerator.close();
-                    }
-                }
-            }
-        };
-        return stream;
-    }
-
 
     public StreamingResponseBody getFriendRequests(String userID) {
         AppUser userDetails = appUserRepository.findById(userID).orElse(null);
@@ -316,54 +299,50 @@ public class AppUserService implements UserDetailsService {
         return stream;
     }
 
-    public StreamingResponseBody getMessages(String userID,String friendID,String offset,int limit) {
+    public StreamingResponseBody getMessages(String userID,String relationShipID,String offset,int limit) {
         AppUser user = appUserRepository.findById(userID).orElse(null);
-        AppUser friend = appUserRepository.findById(friendID).orElse(null);
-        if(user == null|| friend==null){
+        RelationShip relationShip = relationShipRepository.findById(relationShipID).orElse(null);
+        if(user == null|| relationShip==null){
             return null;
         }
         StreamingResponseBody stream = outputStream -> {
-            List<Record> listMyChat = user.getListMyChat().stream().filter(c->c.getReceiver().getId().equals(friendID)).collect(Collectors.toList());
-            List<Record> listChat = user.getListChat().stream().filter(c->c.getSender().getId().equals(friendID)).collect(Collectors.toList());
-            listMyChat.addAll(listChat);
-            listMyChat.sort(Comparator.comparingLong(Record::getTimeStampLong));
+            List<Record> listChat = relationShip.getListChat();
+            listChat.sort(Comparator.comparingLong(Record::getTimeStampLong));
             String newOffset = "";
-
             if(offset.equals("")){
-                int length = listMyChat.size();
+                int length = listChat.size();
                 int start = Math.max(length - limit, 0);
-                listMyChat = listMyChat.subList(start, length);
-                if(listMyChat.size()>0){
-                    newOffset = listMyChat.get(0).getRecordID();
+                listChat = listChat.subList(start, length);
+                if(listChat.size()>0){
+                    newOffset = listChat.get(0).getRecordID();
                 }
             }
             else{
                 int index = -1;
-                for (int i = 0; i < listMyChat.size(); i++) {
-                    if (listMyChat.get(i).getRecordID().equals(offset)) {
+                for (int i = 0; i < listChat.size(); i++) {
+                    if (listChat.get(i).getRecordID().equals(offset)) {
                         index = i;
                         break;
                     }
                 }
                 if (index != -1) {
-                    listMyChat = listMyChat.subList(0, index);
+                    listChat = listChat.subList(0, index);
                 }
                 if (index != 0){
-                    int length = listMyChat.size();
+                    int length = listChat.size();
                     int start = Math.max(length - limit, 0);
-                    listMyChat = listMyChat.subList(start, length);
-                    newOffset = listMyChat.get(0).getRecordID();
+                    listChat = listChat.subList(start, length);
+                    newOffset = listChat.get(0).getRecordID();
                 }
             }
+            List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listChat,userID);
 
-            List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listMyChat,userID);
             if(listChatResponse.size()>0)
                 listChatResponse.get(0).setOffset(newOffset);
 
             ObjectMapper objectMapper = new ObjectMapper();
             Stream<RawChat> rawChatStream = listChatResponse.stream();
             JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
-
             if(rawChatStream!=null){
                 try{
                     Iterator<RawChat> rawChatIterator = rawChatStream.iterator();
@@ -451,10 +430,8 @@ public class AppUserService implements UserDetailsService {
             return new MessageResponse(ErrorMessages.CONFLICT_UNIT.getCode(), ErrorMessages.CONFLICT_UNIT.getMessage());
         }
         friendRequestRepository.delete(request);
-
         FriendRResponse friendRResponse = dataRetrieveUtil.TranslateFriendRequestToTiny(request);
         simpMessagingTemplate.convertAndSendToUser(friendID,"/private",new NotificationChat(friendRResponse,102));
-
         return new MessageResponse(200,"OK");
     }
 
@@ -471,15 +448,22 @@ public class AppUserService implements UserDetailsService {
         AppUser user2 = friendRequest.getReceiver();
         friendRequest.setEnable(true);
         friendRequestRepository.save(friendRequest);
-        FriendShip friendShip1 = new FriendShip(user1,user2,friendRequest);
-        friendShipRepository.save(friendShip1);
-        FriendShip friendShip2 = new FriendShip(user2,user1,friendRequest);
-        friendShipRepository.save(friendShip2);
 
-        FriendShipRespone friendShipRespone1 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip1,null);
-        simpMessagingTemplate.convertAndSendToUser(user1.getId(),"/private",new NotificationChat(friendShipRespone1,101));
-        FriendShipRespone friendShipRespone2 = dataRetrieveUtil.TranslateFriendShipToTiny(friendShip2,null);
-        simpMessagingTemplate.convertAndSendToUser(user2.getId(),"/private",new NotificationChat(friendShipRespone2,101));
+        FriendShip friendShip = new FriendShip(friendRequest);
+        relationShipRepository.save(friendShip);
+
+        DetailRelationShip detailRelationShip1 = new DetailRelationShip(user1,friendShip);
+        DetailRelationShip detailRelationShip2 = new DetailRelationShip(user2,friendShip);
+        detailRelationShipRepository.save(detailRelationShip1);
+        detailRelationShipRepository.save(detailRelationShip2);
+
+        TinyUser tinyUser1 = dataRetrieveUtil.TranslateAppUserToTiny(user1);
+        TinyUser tinyUser2 = dataRetrieveUtil.TranslateAppUserToTiny(user2);
+
+        RelationShipResponse relationShipResponse1 = new RelationShipResponse(friendShip.getRelationshipID(),user2.getFullName(),user2.getUrlAvatar(),List.of(tinyUser2),detailRelationShip1.getType(),null);
+        RelationShipResponse relationShipResponse2 = new RelationShipResponse(friendShip.getRelationshipID(),user1.getFullName(),user1.getUrlAvatar(),List.of(tinyUser1),detailRelationShip1.getType(),null);
+        simpMessagingTemplate.convertAndSendToUser(user1.getId(),"/private",new NotificationChat(relationShipResponse1,101));
+        simpMessagingTemplate.convertAndSendToUser(user2.getId(),"/private",new NotificationChat(relationShipResponse2,101));
 
         return new MessageResponse(200,"OK");
     }

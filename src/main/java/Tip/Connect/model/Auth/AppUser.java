@@ -1,8 +1,10 @@
 package Tip.Connect.model.Auth;
 
 import Tip.Connect.model.Chat.Record;
+import Tip.Connect.model.Relationship.DetailRelationShip;
 import Tip.Connect.model.Relationship.FriendRequest;
 import Tip.Connect.model.Relationship.FriendShip;
+import Tip.Connect.model.Relationship.RelationShip;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -34,20 +36,22 @@ public class AppUser implements UserDetails {
     private boolean looked = false;
     private boolean enabled = false;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @OneToMany(mappedBy = "friendShipId.user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<FriendShip> listFrienst;
+    @OneToMany(mappedBy = "detailRelationShipID.user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DetailRelationShip> detailRelationShipList;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
     @OrderBy("time_stamp ASC")
-    private List<FriendRequest> friendRequests;
-
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
-    @OrderBy("time_stamp ASC")
-    private List<Record> listMyChat;
+    private List<FriendRequest> sentFriendRequests;
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL)
     @OrderBy("time_stamp ASC")
-    private List<Record> listChat;
+    private List<FriendRequest> receivedFriendRequests;
+
+//    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+//    @OrderBy("time_stamp ASC")
+//    private List<Record> listMyChat;
+//    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL)
+//    @OrderBy("time_stamp ASC")
+//    private List<Record> listChat;
 
 
     public AppUser(String firstName,
@@ -60,7 +64,7 @@ public class AppUser implements UserDetails {
         this.email = email;
         this.password = password;
         this.appUserRole = appUserRole;
-        this.listFrienst = new ArrayList<>();
+        this.detailRelationShipList = new ArrayList<>();
         this.urlAvatar = "https://firebasestorage.googleapis.com/v0/b/tipconnect-14d4b.appspot.com/o/Default%2FdefaultAvatar.jpg?alt=media&token=a0a33d34-e4c4-4ed0-8b52-6da79b7b048a";
     }
 

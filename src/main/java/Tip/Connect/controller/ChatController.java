@@ -10,21 +10,17 @@ import Tip.Connect.service.ChatService;
 import Tip.Connect.websocket.config.PrincipalUser;
 import Tip.Connect.websocket.config.UserInterceptor;
 import com.google.common.collect.Iterables;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.security.Principal;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -48,31 +44,37 @@ public class ChatController {
     @MessageMapping("/private")
     private void receivePrivateMessage(@Payload MessageChat chat, Principal principal){
         chat.setFrom(principal.getName());
-        MessageChat message = chatService.saveMessage(chat);
-        if(message!=null){
-            if(message.getType().equals(RecordType.ENDCALL)){
-                simpMessagingTemplate.convertAndSendToUser(message.getTo(),"/private",message);
-                message.setUser(true);
-                simpMessagingTemplate.convertAndSendToUser(message.getFrom(),"/private",message);
+        List<String> listFriendID = chatService.saveMessage(chat);
+        chat.setSeen(false);
+        chat.setUser(false);
+        if(chat.getType().equals(RecordType.ENDCALL)){
+            chat.setSeen(true);
+            for(String friendID:listFriendID){
+                simpMessagingTemplate.convertAndSendToUser(friendID,"/private",chat);
             }
-            else{
-                simpMessagingTemplate.convertAndSendToUser(message.getTo(),"/private",message);
+            chat.setUser(true);
+            simpMessagingTemplate.convertAndSendToUser(chat.getFrom(),"/private",chat);
+        }
+        else{
+            for(String friendID:listFriendID){
+                simpMessagingTemplate.convertAndSendToUser(friendID,"/private",chat);
             }
         }
     }
 
     @MessageMapping("/trade")
     private void tradeRTC(@Payload MessageChat chat){
-        MessageChat message = chatService.tradeRTC(chat);
-        if(message!=null){
-            simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",message);
+        List<String> listFriendID = chatService.tradeRTC(chat);
+        chat.setUser(false);
+        for(String friendID:listFriendID){
+            simpMessagingTemplate.convertAndSendToUser(friendID,"/private",chat);
         }
     }
 
 
     @MessageMapping("/seen")
     private void addSeen(@Payload SeenNotification seenNotification, Principal principal){
-        seenNotification.setTo(principal.getName());
+        String userID = principal.getName();
         if(chatService.addSeen(seenNotification)){
             simpMessagingTemplate.convertAndSendToUser(seenNotification.getFrom(),"/private",seenNotification);
         }
@@ -91,6 +93,14 @@ public class ChatController {
         }
     }
 
+    @MessageMapping("/tradeLive")
+    private void tradeLive(@Payload MessageChat chat){
+        chat.setUser(false);
+        if(chat!=null){
+            simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",chat);
+        }
+    }
+
     @MessageMapping("/live")
     private void liveAction(@Payload MessageChat chat, Principal principal){
         List<String> liveList = LiveController.liveList;
@@ -98,9 +108,11 @@ public class ChatController {
         System.out.println(chat.getBody());
         if(chat.getBody().equals("live")){
             liveList.add(chat.getFrom());
+            System.out.println("add live");
         }
         if(chat.getBody().equals("off")){
             liveList.remove(chat.getFrom());
+            System.out.println("off live");
         }
         if(chat.getBody().equals("off-watch")){
             String userID = chat.getFrom();
