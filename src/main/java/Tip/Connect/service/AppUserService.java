@@ -12,6 +12,7 @@ import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.Relationship.*;
 import Tip.Connect.model.Chat.Record;
 import Tip.Connect.model.reponse.*;
+import Tip.Connect.model.request.AddGroupRequest;
 import Tip.Connect.model.request.LoginRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.repository.*;
@@ -224,9 +225,6 @@ public class AppUserService implements UserDetailsService {
         StreamingResponseBody stream = outputStream -> {
             List<DetailRelationShip> detailRelationShips = userDetails.getDetailRelationShipList();
             List<RelationShipResponse> listFriend = dataRetrieveUtil.TranslateRelationShipToResponse(detailRelationShips);
-            for(RelationShipResponse response: listFriend){
-                System.out.println(response);
-            }
             //check online status
             Map<String, PrincipalUser> map = UserInterceptor.loggedInUsers;
             ObjectMapper objectMapper = new ObjectMapper();
@@ -615,5 +613,25 @@ public class AppUserService implements UserDetailsService {
         }
     }
 
+    public HttpResponse addGroup(String userID, AddGroupRequest request){
+        List<String> listUserID = new ArrayList<>(Arrays.asList(request.listUserID()));
+        listUserID.add(userID);
+
+        GroupShip groupShip = new GroupShip(request.urlAvatar(),request.nameGroup(),userID);
+        relationShipRepository.save(groupShip);
+        List<TinyUser> listTinyUser = new ArrayList<>();
+        for(String id:listUserID){
+            AppUser user = loadUserByUserid(id);
+            listTinyUser.add(dataRetrieveUtil.TranslateAppUserToTiny(user));
+            DetailRelationShip detailRelationShip = new DetailRelationShip(user,groupShip);
+            detailRelationShipRepository.save(detailRelationShip);
+        }
+        for(TinyUser user:listTinyUser){
+            RelationShipResponse relationShipResponse = new RelationShipResponse(groupShip.getRelationshipID(),groupShip.getGroupName(),groupShip.getUrlPic(),listTinyUser.stream().filter(u->!u.getUserID().equals(user.getUserID())).collect(Collectors.toList()),TypeRelationShip.COMMON,null);
+            relationShipResponse.setGroup(true);
+            simpMessagingTemplate.convertAndSendToUser(user.getUserID(),"/private",new NotificationChat(relationShipResponse,101));
+        }
+        return new MessageResponse(200,"Done");
+    }
 
 }

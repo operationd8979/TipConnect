@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Entity
 @Setter
 @Getter
@@ -34,6 +37,10 @@ public class DetailRelationShip {
 
     public AppUser getUser(){
         return this.detailRelationShipID.getUser();
+    }
+
+    public List<AppUser> getFriends(){
+        return this.getRelationShip().getListAppUser().stream().filter(a->!a.equals(this.getUser().getId())).collect(Collectors.toList());
     }
 
     public RelationShip getRelationShip(){

@@ -34,9 +34,7 @@ public class DataRetrieveUtil {
         AppUser user = detailRelationShip.getUser();
         RelationShip relationShip = detailRelationShip.getRelationShip();
         List<TinyUser> listFriend = new ArrayList<>();
-        System.out.println(relationShip.getListDetailRelationShip());
         for(AppUser friend: relationShip.getListDetailRelationShip().stream().map(d->d.getUser()).collect(Collectors.toList())){
-            System.out.println(friend.getId());
             if(friend.getId().equals(user.getId())){
                 continue;
             }

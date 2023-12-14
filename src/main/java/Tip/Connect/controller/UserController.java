@@ -4,6 +4,7 @@ import Tip.Connect.constant.ErrorMessages;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
 import Tip.Connect.model.Relationship.TypeRelationShip;
 import Tip.Connect.model.reponse.*;
+import Tip.Connect.model.request.AddGroupRequest;
 import Tip.Connect.model.request.UpdateAvatarRequest;
 import Tip.Connect.model.request.UpdateRequest;
 import Tip.Connect.service.AppUserService;
@@ -174,11 +175,21 @@ public class UserController {
         return ResponseEntity.ok(appUserService.getGifItem());
     }
 
-
     @GetMapping(value = "/updateTypeFriend/{relationShipID}&{type}")
     public ResponseEntity<HttpResponse> updateTypeFriend(HttpServletRequest request,@PathVariable("relationShipID") String relationShipID,@PathVariable("type") TypeRelationShip type){
         String userID = appUserService.getUserIdByHttpRequest(request);
         return ResponseEntity.ok(appUserService.updateTypeFriend(userID,relationShipID,type));
+    }
+
+    @PostMapping(value = "/addGroup")
+    public ResponseEntity<HttpResponse> addGroup(HttpServletRequest request,@RequestBody AddGroupRequest addGroupRequest){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        System.out.println(addGroupRequest.nameGroup());
+        System.out.println(addGroupRequest.urlAvatar());
+        for(String id: addGroupRequest.listUserID()){
+            System.out.println(id);
+        }
+        return ResponseEntity.ok(appUserService.addGroup(userID,addGroupRequest));
     }
 
 

@@ -24,4 +24,5 @@ public class FriendShip extends RelationShip {
         this.friendRequest = friendRequest;
     }
 
+
 }
