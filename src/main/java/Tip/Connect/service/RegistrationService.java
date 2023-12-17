@@ -55,8 +55,8 @@ public class RegistrationService {
             if(token==null){
                 return ResponseEntity.ok(new ErrorReponse.builder().code(ErrorMessages.EXISTED_EMAIL.getCode()).errorMessage(ErrorMessages.EXISTED_EMAIL.getMessage()).build());
             }
-//            String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
-//            emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
+            String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
+            emailSender.send(request.getEmail(),buildEmail(request.getFirstName(),link));
 
             var userDetails = appUserRepository.findByEmail(request.getEmail()).orElseThrow(()->new IllegalStateException("User not found!"));
             TinyUser tinyUser = dataRetrieveUtil.TranslateAppUserToTiny(userDetails);

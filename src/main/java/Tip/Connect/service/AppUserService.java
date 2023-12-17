@@ -9,6 +9,7 @@ import Tip.Connect.model.Chat.RecordType;
 import Tip.Connect.model.Chat.WsRecord.MessageChat;
 import Tip.Connect.model.Chat.WsRecord.NotificationChat;
 import Tip.Connect.model.Chat.WsRecord.RawChat;
+import Tip.Connect.model.Live.LiveShow;
 import Tip.Connect.model.Relationship.*;
 import Tip.Connect.model.Chat.Record;
 import Tip.Connect.model.reponse.*;
@@ -71,10 +72,10 @@ public class AppUserService implements UserDetailsService {
             return null;
         }
         StreamingResponseBody stream = outputStream -> {
-            List<String> listLive = LiveController.liveList;
+            List<LiveShow> listLive = LiveController.liveList;
             List<AppUser> listUserLive = new ArrayList<>();
-            for(String l:listLive){
-                AppUser live = loadUserByUserid(l);
+            for(LiveShow l:listLive){
+                AppUser live = loadUserByUserid(l.getHost());
                 listUserLive.add(live);
             }
             List<TinyUser> listUserLiveResponse = new ArrayList<>();
@@ -364,6 +365,44 @@ public class AppUserService implements UserDetailsService {
         };
         return stream;
     }
+
+    public StreamingResponseBody getAllMediaFiles(String userID,String relationShipID) {
+        AppUser user = appUserRepository.findById(userID).orElse(null);
+        RelationShip relationShip = relationShipRepository.findById(relationShipID).orElse(null);
+        if(user == null|| relationShip==null){
+            return null;
+        }
+        StreamingResponseBody stream = outputStream -> {
+            List<Record> listChat = relationShip.getListChat().stream().filter(c->c.isMediaFile()).collect(Collectors.toList());
+            listChat.sort(Comparator.comparingLong(Record::getTimeStampLong));
+            List<RawChat> listChatResponse = dataRetrieveUtil.TranslateRecordToResponse(listChat,userID);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Stream<RawChat> rawChatStream = listChatResponse.stream();
+            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(outputStream);
+            if(rawChatStream!=null){
+                try{
+                    Iterator<RawChat> rawChatIterator = rawChatStream.iterator();
+                    jsonGenerator.writeStartArray();
+                    while(rawChatIterator.hasNext()) {
+                        RawChat rawChat = rawChatIterator.next();
+                        jsonGenerator.writeObject(rawChat);
+                    }
+                    jsonGenerator.writeEndArray();
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }finally {
+                    if(rawChatStream != null) {
+                        rawChatStream.close();
+                    }
+                    if(jsonGenerator != null)  {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return stream;
+    }
+
 
     public StreamingResponseBody getGifItem(){
         StreamingResponseBody stream = outputStream -> {

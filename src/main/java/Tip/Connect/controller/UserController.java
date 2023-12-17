@@ -192,5 +192,14 @@ public class UserController {
         return ResponseEntity.ok(appUserService.addGroup(userID,addGroupRequest));
     }
 
+    @GetMapping(value = "/getAllMediaFiles/{relationShipID}")
+    public ResponseEntity<StreamingResponseBody> getAllMediaFiles(HttpServletRequest request,@PathVariable("relationShipID") String relationShipID){
+        String userID = appUserService.getUserIdByHttpRequest(request);
+        if(userID==null){
+            return ResponseEntity.ok(null);
+        }
+        return ResponseEntity.ok(appUserService.getAllMediaFiles(userID,relationShipID));
+    }
+
 
 }

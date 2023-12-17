@@ -52,5 +52,9 @@ public abstract class Record {
 
     public abstract boolean isContainContent(String content);
 
+    public boolean isMediaFile(){
+        return this.type.equals(RecordType.PDF)||this.type.equals(RecordType.WORD)||this.type.equals(RecordType.EXCEL)||this.type.equals(RecordType.PHOTO);
+    }
+
 
 }
