@@ -113,13 +113,25 @@ public class ChatController {
             LiveShow live = liveList.stream().filter(l->l.getHost().equals(chat.getFrom())).findFirst().orElse(null);
             if(live!=null){
                 liveList.remove(live);
+                for(String watcherID : live.getListWatch()){
+                    simpMessagingTemplate.convertAndSendToUser(watcherID,"/private",chat);
+                }
             }
         }
         if(chat.getBody().equals("off-watch")){
             String userID = chat.getFrom();
             LiveShow live = liveList.stream().filter(l->l.getHost().equals(chat.getTo())).findFirst().orElse(null);
             if(live!=null){
-                live.removeWatcher(userID);
+                int index = live.removeWatcher(userID);
+                String newHostID = live.getHost();
+                if(index!=0){
+                    newHostID = live.getListWatch().get(index-1);
+                }
+                String victimID = live.getListWatch().get(index);
+                chat.setBody("host");
+                chat.setFrom(newHostID);
+                chat.setTo(victimID);
+                simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",chat);
             }
         }
         if(chat.getBody().equals("watch")){
@@ -130,7 +142,6 @@ public class ChatController {
                 chat.setBody("host");
                 chat.setFrom(hostID);
                 chat.setTo(userID);
-                System.out.println(hostID);
                 simpMessagingTemplate.convertAndSendToUser(chat.getTo(),"/private",chat);
             }
 //            if(watchList.size()>0){

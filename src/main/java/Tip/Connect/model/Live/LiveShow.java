@@ -30,8 +30,10 @@ public class LiveShow {
         return hostID;
     }
 
-    public void removeWatcher(String watcherID){
+    public int removeWatcher(String watcherID){
+        int index = listWatch.indexOf(watcherID);
         listWatch.remove(watcherID);
+        return index;
     }
 
 }
