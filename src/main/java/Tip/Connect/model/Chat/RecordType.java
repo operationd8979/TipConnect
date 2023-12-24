@@ -15,4 +15,6 @@ public enum RecordType {
     RTC,
     ONLINE,
     LIVE,
+    LIVECHAT,
+    LIVENOTIFY,
 }
